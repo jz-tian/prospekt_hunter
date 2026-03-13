@@ -4,7 +4,7 @@ export function OffersFilter({ retailers, categories, searchParams }) {
       <form>
         <input type="hidden" name="week" value={searchParams.week ?? "current"} />
         <input
-          className="search-input"
+          className="search-input-field"
           type="search"
           name="search"
           placeholder="Produkte oder Marken suchen"
