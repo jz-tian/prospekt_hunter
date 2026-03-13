@@ -1,6 +1,6 @@
 # AngebotsRadar
 
-AngebotsRadar ist ein lokales Next.js-Webapp-MVP für die Aggregation von Wochenangeboten aus den Prospekten von `ALDI`, `Lidl`, `Denns BioMarkt` und `EDEKA`.
+AngebotsRadar ist ein lokales Next.js-Webapp-MVP für die Aggregation von Wochenangeboten aus den Prospekten von `ALDI`, `Lidl`, `Denns BioMarkt`, `NORMA` und `EDEKA`.
 
 ## Status
 
@@ -9,9 +9,12 @@ Stand vom `2026-03-13`:
 - `ALDI` und `Lidl` sind als echte Live-Adapter angebunden
 - `EDEKA` hat jetzt einen echten Live-Adapter für Prospekt-Metadaten und aktuelle Angebotsseiten
 - `Denns BioMarkt` ist jetzt als Live-Adapter über die offizielle Angebotsseite mit strukturierter `page-data` angebunden
+- `NORMA` ist jetzt als Live-Adapter über die offizielle Angebots-HTML-Navigation und Themenwelten angebunden
 - Das Repo ist jetzt unter `https://github.com/jz-tian/prospekt_hunter.git` auf `main` versioniert
 - Startseite, Angebotsliste und Prospektseite lesen ohne implizite Schreibzugriffe direkt aus der lokalen Datenbank
 - Die App unterstützt `current` und `next` week scope
+- Die Einkaufsliste ist als globale Drawer-Ansicht verfügbar und unterstützt Summen pro Markt, Gesamtsumme und Export
+- Die gemeinsame Kategorisierung wurde auf feinere Regeln mit `Sonstige`-Fallback umgestellt und mehrfach gegen Fehlklassifizierungen nachgeschärft
 - Im Produktmodell werden aktuell nur stabile Felder genutzt:
   - Produktname
   - Marke
@@ -30,7 +33,9 @@ Stand vom `2026-03-13`:
 - Interne API-Routen für Angebote, Prospekte, Kategorien, Einkaufsliste und Admin-Ingest
 - Adapter-Architektur für Prospekt-Ingestion
 - Fixture-basierte Seed-Daten für Start- und Demo-Zustände
-- Echte Live-Adapter für `ALDI`, `Lidl`, `Denns BioMarkt` und `EDEKA`
+- Echte Live-Adapter für `ALDI`, `Lidl`, `Denns BioMarkt`, `NORMA` und `EDEKA`
+- Globale Einkaufsliste als Floating Drawer mit Mengen, Häkchen, Summen und Clear-Aktionen
+- Export der Einkaufsliste als Text, TXT und CSV; auf lokalem macOS zusätzlich nach Notizen und Erinnerungen
 
 ## Start
 
@@ -131,6 +136,26 @@ Stand der letzten lokalen Verifikation vom `2026-03-13`:
 - ALDI `current`: `183` offers, `183` mit Bild
 - ALDI `next`: `30` offers, `30` mit Bild
 
+### NORMA
+
+- Quelle für Angebotsdaten: offizielle NORMA-Angebotsseite `https://www.norma-online.de/de/angebote/`
+- Technischer Pfad:
+  - Datumseinstiege wie `ab Montag`, `ab Mittwoch`, `ab Freitag` aus der offiziellen Übersicht erkennen
+  - Themenwelt-Seiten der relevanten Woche laden
+  - Produktkarten direkt aus den offiziellen HTML-Themenseiten extrahieren
+- Bereits live:
+  - current/next week Auswahl
+  - Angebotsname
+  - Marke
+  - Preis und UVP, sofern vorhanden
+  - Produktbild
+  - Produkt-URL
+  - Themenwelt als `sourceSection`
+
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
+
+- NORMA `current`: `226` offers
+
 ### EDEKA
 
 - Quelle für Prospekt-Metadaten: offizielles `prospekt.jsp` inklusive `__NEXT_DATA__`
@@ -181,11 +206,11 @@ Stand der letzten lokalen Verifikation vom `2026-03-13`:
 
 ## Nächste sinnvolle Schritte
 
-1. Lidl-Kategorisierung verbessern, da Lidl-eigene Kategorien aktuell nur grob auf die gemeinsame Taxonomie gemappt werden
-2. ALDI-Kategorisierung verbessern, da die offiziellen Prospekt-Produkttypen noch nicht sauber auf die gemeinsame Taxonomie gemappt werden
-3. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden, um den live `next`-Pfad gegen echte Daten zu verifizieren
-4. Falls Denns später weitere Marktspezifika braucht, `DENNS_MARKET_SLUG` pro Deployment passend setzen
-5. Falls Denns später wieder näher an das vollständige Prospekt gebracht werden soll, einen zweiten Pfad für PDF/Viewer-Ergänzung zusätzlich zum offiziellen `page-data` bauen
+1. Restliche `Sonstige`-Grenzfälle weiter reduzieren, vor allem bei Wohnen/Garten/Haushalt statt weiterer Lebensmittel-Fehlgriffe
+2. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden, um den live `next`-Pfad gegen echte Daten zu verifizieren
+3. Falls Denns später weitere Marktspezifika braucht, `DENNS_MARKET_SLUG` pro Deployment passend setzen
+4. Falls Denns später wieder näher an das vollständige Prospekt gebracht werden soll, einen zweiten Pfad für PDF/Viewer-Ergänzung zusätzlich zum offiziellen `page-data` bauen
+5. Optional: manuelle Kategorie-Korrekturen im Admin-UI ergänzen, statt jede Randklasse nur regelbasiert abzudecken
 
 ## Übergabe
 

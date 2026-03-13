@@ -25,7 +25,7 @@ export default async function HomePage({ searchParams }) {
           <div className="eyebrow">{weekLabel}</div>
           <h2>Alle Prospekte. Alle Preise. Ein Einkaufszettel.</h2>
           <p>
-            AngebotsRadar bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns BioMarkt und EDEKA, kategorisiert sie automatisch
+            AngebotsRadar bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns BioMarkt, NORMA und EDEKA, kategorisiert sie automatisch
             und macht daraus eine nutzbare Preisübersicht mit Einkaufsliste.
           </p>
           <div className="hero-actions">
@@ -85,7 +85,7 @@ export default async function HomePage({ searchParams }) {
         <div className="section-header">
           <div>
             <h3>Alle Produkte</h3>
-            <p>Einheitliche Kategorien, inspiriert vom klaren Aufbau moderner Supermarkt-Oberflächen.</p>
+            <p>Feinere Kategorien für bessere Orientierung zwischen Vorrat, Getränken, Snacks, Haushalt und Frische.</p>
           </div>
           <Link href={`/offers?week=${weekScope}`} className="ghost-button">
             Zur Angebotsliste
@@ -127,7 +127,7 @@ export default async function HomePage({ searchParams }) {
 
       <p className="footer-note">
         Daten werden aus der lokalen Datenbank gelesen. Mit "Daten aktualisieren" startest du einen manuellen Ingest gegen die
-        offiziellen Quellen aller vier Händler. Denns läuft dabei direkt über die offizielle Angebotsseite mit strukturierter page-data.
+        offiziellen Quellen aller fünf Händler. Denns läuft dabei direkt über die offizielle Angebotsseite mit strukturierter page-data.
       </p>
     </SiteShell>
   );

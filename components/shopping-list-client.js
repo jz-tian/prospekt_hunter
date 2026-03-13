@@ -8,14 +8,32 @@ async function fetchList() {
   return response.json();
 }
 
+function buildGroupedSummaries(items) {
+  const grouped = items.reduce((accumulator, item) => {
+    accumulator[item.retailerName] ??= [];
+    accumulator[item.retailerName].push(item);
+    return accumulator;
+  }, {});
+
+  return Object.entries(grouped).map(([retailerName, retailerItems]) => ({
+    retailerName,
+    items: retailerItems,
+    quantity: retailerItems.reduce((sum, item) => sum + item.quantity, 0),
+    total: retailerItems.reduce((sum, item) => sum + item.salePrice * item.quantity, 0)
+  }));
+}
+
 export function ShoppingListClient({ initialItems }) {
   const [items, setItems] = useState(initialItems);
+  const [exportStatus, setExportStatus] = useState("");
 
   useEffect(() => {
     async function refresh() {
       const next = await fetchList();
       setItems(next.items);
     }
+
+    refresh();
 
     function handleUpdate() {
       refresh();
@@ -36,6 +54,7 @@ export function ShoppingListClient({ initialItems }) {
 
     const next = await fetchList();
     setItems(next.items);
+    window.dispatchEvent(new CustomEvent("shopping-list-updated"));
   }
 
   async function removeItem(id) {
@@ -45,15 +64,97 @@ export function ShoppingListClient({ initialItems }) {
 
     const next = await fetchList();
     setItems(next.items);
+    window.dispatchEvent(new CustomEvent("shopping-list-updated"));
   }
 
-  const grouped = items.reduce((accumulator, item) => {
-    accumulator[item.retailerName] ??= [];
-    accumulator[item.retailerName].push(item);
-    return accumulator;
-  }, {});
-
   const total = items.reduce((sum, item) => sum + item.salePrice * item.quantity, 0);
+  const retailerSummaries = buildGroupedSummaries(items);
+  const retailerCount = retailerSummaries.length;
+
+  function buildPlainTextExport() {
+    const lines = ["Einkaufsliste", ""];
+
+    for (const summary of retailerSummaries) {
+      lines.push(`${summary.retailerName} · ${formatEuro(summary.total)}`);
+
+      for (const item of summary.items) {
+        lines.push(`${item.checked ? "☑" : "☐"} ${item.quantity}x ${item.productName} (${formatEuro(item.salePrice)})`);
+      }
+
+      lines.push("");
+    }
+
+    lines.push(`Gesamtsumme: ${formatEuro(total)}`);
+    return lines.join("\n");
+  }
+
+  function downloadFile(filename, content, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyPlainTextExport() {
+    const content = buildPlainTextExport();
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setExportStatus("Textliste kopiert");
+    } catch {
+      setExportStatus("Kopieren fehlgeschlagen");
+    }
+  }
+
+  function downloadCsvExport() {
+    const rows = [
+      ["Retailer", "Status", "Product", "Quantity", "Unit Price", "Line Total", "Checked"],
+      ...items.map((item) => [
+        item.retailerName,
+        item.checked ? "done" : "open",
+        item.productName,
+        String(item.quantity),
+        item.salePrice.toFixed(2),
+        (item.salePrice * item.quantity).toFixed(2),
+        item.checked ? "yes" : "no"
+      ])
+    ];
+
+    const content = rows
+      .map((row) => row.map((value) => `"${String(value).replaceAll("\"", "\"\"")}"`).join(","))
+      .join("\n");
+
+    downloadFile("einkaufsliste.csv", content, "text/csv;charset=utf-8");
+    setExportStatus("CSV exportiert");
+  }
+
+  function downloadTextExport() {
+    downloadFile("einkaufsliste.txt", buildPlainTextExport(), "text/plain;charset=utf-8");
+    setExportStatus("Textdatei exportiert");
+  }
+
+  async function exportToNotes() {
+    const response = await fetch("/api/shopping-list/export-notes", {
+      method: "POST"
+    });
+
+    const payload = await response.json();
+    setExportStatus(payload.message ?? (response.ok ? "An Notizen exportiert" : "Export fehlgeschlagen"));
+  }
+
+  async function exportToReminders() {
+    const response = await fetch("/api/shopping-list/export-reminders", {
+      method: "POST"
+    });
+
+    const payload = await response.json();
+    setExportStatus(payload.message ?? (response.ok ? "In Erinnerungen exportiert" : "Export fehlgeschlagen"));
+  }
 
   return (
     <div className="shopping-layout">
@@ -64,15 +165,16 @@ export function ShoppingListClient({ initialItems }) {
             <p className="muted">Füge Angebote aus der Übersicht hinzu, um dir einen Wocheneinkauf zusammenzustellen.</p>
           </div>
         ) : (
-          Object.entries(grouped).map(([retailerName, retailerItems]) => (
-            <div className="panel" key={retailerName} style={{ padding: 18 }}>
+          retailerSummaries.map((summary) => (
+            <div className="panel" key={summary.retailerName} style={{ padding: 18 }}>
               <div className="section-header">
                 <div>
-                  <h3>{retailerName}</h3>
-                  <p>{retailerItems.length} Artikel</p>
+                  <h3>{summary.retailerName}</h3>
+                  <p>{summary.quantity} Stück · {summary.items.length} Positionen</p>
                 </div>
+                <div className="chip">Summe {formatEuro(summary.total)}</div>
               </div>
-              {retailerItems.map((item) => (
+              {summary.items.map((item) => (
                 <div className={`card shopping-item ${item.checked ? "done" : ""}`} key={item.id}>
                   <input
                     type="checkbox"
@@ -117,13 +219,41 @@ export function ShoppingListClient({ initialItems }) {
           </div>
           <div className="info-row">
             <span>Märkte</span>
-            <strong>{Object.keys(grouped).length}</strong>
+            <strong>{retailerCount}</strong>
           </div>
           <div className="info-row">
             <span>Schätzkosten</span>
             <strong>{formatEuro(total)}</strong>
           </div>
         </div>
+        {retailerSummaries.length > 0 ? (
+          <div className="retailer-summary-list">
+            {retailerSummaries.map((summary) => (
+              <div className="info-row" key={summary.retailerName}>
+                <span>{summary.retailerName}</span>
+                <strong>{formatEuro(summary.total)}</strong>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div className="export-actions">
+          <button type="button" className="cta" onClick={exportToReminders} disabled={items.length === 0}>
+            In Erinnerungen exportieren
+          </button>
+          <button type="button" className="ghost-button" onClick={exportToNotes} disabled={items.length === 0}>
+            In Notizen exportieren
+          </button>
+          <button type="button" className="ghost-button" onClick={copyPlainTextExport} disabled={items.length === 0}>
+            Text kopieren
+          </button>
+          <button type="button" className="ghost-button" onClick={downloadTextExport} disabled={items.length === 0}>
+            TXT exportieren
+          </button>
+          <button type="button" className="ghost-button" onClick={downloadCsvExport} disabled={items.length === 0}>
+            CSV exportieren
+          </button>
+        </div>
+        {exportStatus ? <div className="muted export-status">{exportStatus}</div> : null}
       </aside>
     </div>
   );

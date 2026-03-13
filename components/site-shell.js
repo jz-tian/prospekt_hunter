@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ShoppingListDrawer } from "@/components/shopping-list-drawer";
+import { ShoppingListNavLink } from "@/components/shopping-list-nav-link";
 
 export function SiteShell({ children }) {
   return (
@@ -22,13 +24,12 @@ export function SiteShell({ children }) {
           <Link href="/prospekte" className="nav-link">
             Prospekte
           </Link>
-          <Link href="/shopping-list" className="nav-link">
-            Einkaufsliste
-          </Link>
+          <ShoppingListNavLink />
         </nav>
       </header>
 
       {children}
+      <ShoppingListDrawer />
     </div>
   );
 }

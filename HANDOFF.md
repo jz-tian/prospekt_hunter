@@ -6,6 +6,7 @@ Dieses Repo ist nicht mehr nur ein UI-Mock. Mehrere echte Händler sind bereits 
 
 - `Lidl` und `ALDI` laufen über Live-Daten
 - `Denns BioMarkt` läuft über die offizielle Angebotsseite als Live-JSON-Quelle
+- `NORMA` läuft über die offizielle Angebotsseite und deren Themenwelten
 - `EDEKA` läuft über Live-Prospekt-Metadaten und aktuelle Angebotsseiten
 - Das Repo ist nach `main` auf `https://github.com/jz-tian/prospekt_hunter.git` gepusht
 
@@ -21,6 +22,9 @@ Zusätzlich gilt jetzt:
 - `app/page.js`, `app/offers/page.js` und `app/prospekte/page.js` lesen nur noch die lokale Datenbank
 - die öffentlichen APIs `/api/offers`, `/api/prospekte` und `/api/categories` triggern keinen Ingest mehr
 - ein Ingest läuft nur noch explizit über den Button `Daten aktualisieren` oder über `/api/refresh`
+- die Einkaufsliste ist jetzt ein globaler Drawer statt nur einer separaten Seite
+- Clear-All, Clear-per-Retailer sowie Text/TXT/CSV-Export sind implementiert
+- auf lokalem macOS gibt es zusätzlich Export nach Apple Notizen und Erinnerungen
 
 ## Active Product Scope
 
@@ -51,6 +55,7 @@ Der numerische Rabatt-Prozentwert bleibt draußen, weil er quellenübergreifend 
 - Angebotsliste mit Filtern
 - Prospektseite
 - Einkaufsliste
+- globaler Einkaufslisten-Drawer
 - Umschaltung `week=current|next`
 - manueller Ingest per Button
 
@@ -180,12 +185,31 @@ Grund: Die aktuelle ALDI-`/angebote/{date}`-Seite liefert für `current` nicht m
   - Coupon-/Promo-Karten wie `10% Rabatt` werden als Label-Karten gespeichert
 - offene Grenze:
   - das ist ein offizieller Frontend-Datenpfad, aber keine dokumentierte Public API
-  - wenn biomarkt.de seine Gatsby-Struktur ändert, muss der Adapter angepasst werden
+- wenn biomarkt.de seine Gatsby-Struktur ändert, muss der Adapter angepasst werden
 
 Stand der letzten lokalen Verifikation vom `2026-03-13`:
 
 - offizielles Denns `page-data` für `muenchen-regerstr`: `12` Karten
 - die App übernimmt diese `12` Karten jetzt vollständig statt wie vorher nur einen Teil davon
+
+### NORMA
+
+- Datei:
+  - [lib/ingest/adapters/norma.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/ingest/adapters/norma.js)
+- offizielle Discovery:
+  - `https://www.norma-online.de/de/angebote/`
+- aktueller Ansatz:
+  - relevante Datumseinstiege (`ab Montag`, `ab Mittwoch`, `ab Freitag`) aus der offiziellen Übersicht lesen
+  - Themenwelten der passenden Woche entdecken
+  - Produktkarten direkt aus den offiziellen Themenseiten extrahieren
+  - `current` und `next` über Datumseinstiege ableiten
+- offene Grenze:
+  - HTML-Struktur ist weniger stabil als ein offizielles JSON/API
+  - Produktgruppen hängen an Themenwelten, deshalb ist die gemeinsame Taxonomie weiterhin regelbasiert
+
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
+
+- NORMA `current`: `226` offers
 
 ### Lidl
 
@@ -195,33 +219,36 @@ Stand der letzten lokalen Verifikation vom `2026-03-13`:
 
 ### Kategorien
 
-- gemeinsame Kategorien sind bereits vorhanden
-- Lidl-spezifische Kategorien werden aktuell nur über einfache Textregeln gemappt
-- manche Zuordnungen sind fachlich noch ungenau
-- ALDI-Produkttypen aus den Prospekt-Hotspots werden aktuell noch nur grob gemappt
+- gemeinsame Kategorien sind bereits vorhanden und inzwischen feiner aufgeteilt, inklusive `Sonstige`
+- Matching wurde von rohem Substring-Matching auf deutsche Normalisierung plus wortbasierte Regeln umgestellt
+- zuletzt wurden mehrere Fehlklassifikationen aus `Sport & Freizeit` und `Sonstige` bereinigt
+- trotzdem bleiben Randfälle, vor allem bei Wohnen/Garten/Haushalt und sehr generischen Abschnittsnamen
 
 ## Files Worth Reading First
 
 - [lib/ingest/adapters/lidl.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/ingest/adapters/lidl.js)
 - [lib/db.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/db.js)
+- [lib/classification.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/classification.js)
+- [lib/constants.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/constants.js)
 - [app/offers/page.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/app/offers/page.js)
 - [components/offer-card.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/components/offer-card.js)
+- [components/shopping-list-drawer.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/components/shopping-list-drawer.js)
 - [lib/sample-data.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/sample-data.js)
 
 ## Known Gaps
 
-1. ALDI-Kategorien sind noch ungenau, weil die offiziellen Prospekt-Produkttypen noch nicht sauber auf die gemeinsame Taxonomie gemappt werden.
+1. Es bleiben noch `Sonstige`-Grenzfälle, aber deutlich weniger lebensmittelbezogene Fehlklassifikationen als vorher.
 2. Es gibt noch keine persistente Rohdatenablage für HTML/PDF Snapshots je Ingest-Lauf.
 3. Es gibt noch kein Admin-UI für "needs review" oder manuelle Korrekturen.
 4. EDEKA `next` week ist nur live, wenn der gewählte Markt bereits offiziell einen zukünftigen Flyer veröffentlicht hat.
 
 ## Best Next Steps
 
-1. ALDI-Kategorien verbessern.
-2. Lidl-Kategorien verbessern.
-3. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden und den `next`-Pfad gegen Live-Daten verifizieren.
-4. Falls Denns später näher an das vollständige Prospekt gebracht werden soll, einen zusätzlichen PDF/Viewer-Pfad bauen statt den offiziellen `page-data`-Pfad zu verbiegen.
+1. Restliche `Sonstige`-Grenzfälle eher gezielt per Beispielsammlung als blind über mehr Keywords bereinigen.
+2. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden und den `next`-Pfad gegen Live-Daten verifizieren.
+3. Falls Denns später näher an das vollständige Prospekt gebracht werden soll, einen zusätzlichen PDF/Viewer-Pfad bauen statt den offiziellen `page-data`-Pfad zu verbiegen.
+4. Optional ein kleines Admin-UI für manuelle Kategorie-Overrides ergänzen.
 
 ## Practical Warning
 
-Port `3000` war in dieser Session zeitweise von einer alten Instanz belegt. Für die aktuelle Entwicklungsarbeit wurde `3001` verwendet. Wenn UI-Verhalten nicht zu den letzten Codeänderungen passt, zuerst prüfen, ob wirklich `127.0.0.1:3001` geöffnet ist.
+Die stabil laufende Dev-Instanz dieser Session war zuletzt `127.0.0.1:3005`. Wenn UI-Verhalten nicht zu den letzten Codeänderungen passt, zuerst prüfen, ob nicht noch eine alte Next-Dev-Instanz auf einem früheren Port offen ist.

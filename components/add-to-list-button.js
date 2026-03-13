@@ -17,7 +17,7 @@ export function AddToListButton({ offerId }) {
       });
 
       if (response.ok) {
-        setLabel("Hinzugefügt");
+        setLabel("In Liste");
         window.dispatchEvent(new CustomEvent("shopping-list-updated"));
       } else {
         setLabel("Fehler");

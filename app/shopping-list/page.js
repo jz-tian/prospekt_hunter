@@ -2,8 +2,10 @@ import { SiteShell } from "@/components/site-shell";
 import { ShoppingListClient } from "@/components/shopping-list-client";
 import { listShoppingItems } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export default function ShoppingListPage() {
-  const items = listShoppingItems();
+  const items = JSON.parse(JSON.stringify(listShoppingItems()));
 
   return (
     <SiteShell>
