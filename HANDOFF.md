@@ -5,8 +5,8 @@
 Dieses Repo ist nicht mehr nur ein UI-Mock. Mehrere echte Händler sind bereits angebunden:
 
 - `Lidl` und `ALDI` laufen über Live-Daten
+- `Denns BioMarkt` läuft über die offizielle Angebotsseite als Live-JSON-Quelle
 - `EDEKA` läuft über Live-Prospekt-Metadaten und aktuelle Angebotsseiten
-- `REWE` läuft noch über Fixture-Daten
 - Das Repo ist nach `main` auf `https://github.com/jz-tian/prospekt_hunter.git` gepusht
 
 Die App läuft lokal stabil mit:
@@ -20,7 +20,7 @@ Zusätzlich gilt jetzt:
 
 - `app/page.js`, `app/offers/page.js` und `app/prospekte/page.js` lesen nur noch die lokale Datenbank
 - die öffentlichen APIs `/api/offers`, `/api/prospekte` und `/api/categories` triggern keinen Ingest mehr
-- ein Ingest läuft nur noch explizit über den Button `Daten aktualisieren` oder über `/api/admin/ingest/run`
+- ein Ingest läuft nur noch explizit über den Button `Daten aktualisieren` oder über `/api/refresh`
 
 ## Active Product Scope
 
@@ -29,6 +29,8 @@ Der aktuelle Scope wurde bewusst vereinfacht:
 - Produktname
 - Marke
 - Angebotspreis
+- offizieller Streichpreis, wenn die Quelle ihn sauber liefert
+- Promo-Label für offizielle Coupon-Karten ohne Euro-Preis
 - Produktbild
 - Produkt-URL
 - Kategorie / Beschreibung
@@ -37,10 +39,9 @@ Der aktuelle Scope wurde bewusst vereinfacht:
 
 Nicht mehr Teil der aktiven Produktlogik:
 
-- Originalpreis
 - Rabatt-Prozent
 
-Der Grund ist Datenqualität: Die alten Preisfelder ließen sich für Lidl nicht stabil genug aus offiziellen Seiten ableiten, ohne wieder falsche Werte zu riskieren.
+Der numerische Rabatt-Prozentwert bleibt draußen, weil er quellenübergreifend nicht stabil genug ist. Originalpreise werden nur dort gezeigt, wo die jeweilige offizielle Quelle sie sauber liefert.
 
 ## What Is Already Implemented
 
@@ -162,10 +163,29 @@ Grund: Die aktuelle ALDI-`/angebote/{date}`-Seite liefert für `current` nicht m
 
 ## Important Constraints
 
-### REWE
+### Denns BioMarkt
 
-- direktes serverseitiges HTML-Fetching läuft in Cloudflare-Challenge
-- deshalb noch kein echter Adapter
+- Datei:
+  - [lib/ingest/adapters/denns.js](/Users/jiazheng/idol/claude_projects/supermarket_discount/lib/ingest/adapters/denns.js)
+- offizielle Discovery:
+  - `https://www.biomarkt.de/<markt>/angebote`
+- offizielle Datenträger:
+  - Gatsby `page-data.json` der Angebotsseite
+- aktueller Ansatz:
+  - JSON direkt von der offiziellen Angebotsseite laden
+  - `current` bildet die reale offizielle Angebotsseite möglichst nah ab
+  - `next` wird aus den offiziellen Gültigkeitsfeldern und `appValid*`-Fenstern abgeleitet
+  - Prospekt-Link wird aus den offiziellen `offerHandouts`-Ranges gezogen
+  - App-only-Karten mit nur `priceApp` bleiben erhalten
+  - Coupon-/Promo-Karten wie `10% Rabatt` werden als Label-Karten gespeichert
+- offene Grenze:
+  - das ist ein offizieller Frontend-Datenpfad, aber keine dokumentierte Public API
+  - wenn biomarkt.de seine Gatsby-Struktur ändert, muss der Adapter angepasst werden
+
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
+
+- offizielles Denns `page-data` für `muenchen-regerstr`: `12` Karten
+- die App übernimmt diese `12` Karten jetzt vollständig statt wie vorher nur einen Teil davon
 
 ### Lidl
 
@@ -193,15 +213,14 @@ Grund: Die aktuelle ALDI-`/angebote/{date}`-Seite liefert für `current` nicht m
 1. ALDI-Kategorien sind noch ungenau, weil die offiziellen Prospekt-Produkttypen noch nicht sauber auf die gemeinsame Taxonomie gemappt werden.
 2. Es gibt noch keine persistente Rohdatenablage für HTML/PDF Snapshots je Ingest-Lauf.
 3. Es gibt noch kein Admin-UI für "needs review" oder manuelle Korrekturen.
-4. Es gibt noch keine echte REWE-Live-Anbindung.
-5. EDEKA `next` week ist nur live, wenn der gewählte Markt bereits offiziell einen zukünftigen Flyer veröffentlicht hat.
+4. EDEKA `next` week ist nur live, wenn der gewählte Markt bereits offiziell einen zukünftigen Flyer veröffentlicht hat.
 
 ## Best Next Steps
 
 1. ALDI-Kategorien verbessern.
 2. Lidl-Kategorien verbessern.
 3. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden und den `next`-Pfad gegen Live-Daten verifizieren.
-4. Falls Originalpreis später wieder zurückkommen soll, komplett separat neu designen und nicht auf dem alten Codepfad wieder aufbauen.
+4. Falls Denns später näher an das vollständige Prospekt gebracht werden soll, einen zusätzlichen PDF/Viewer-Pfad bauen statt den offiziellen `page-data`-Pfad zu verbiegen.
 
 ## Practical Warning
 

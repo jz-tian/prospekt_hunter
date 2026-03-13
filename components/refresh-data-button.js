@@ -14,7 +14,7 @@ export function RefreshDataButton({ weekScope = "current" }) {
     setMessage("");
 
     try {
-      const response = await fetch(`/api/admin/ingest/run?week=${weekScope}`, {
+      const response = await fetch(`/api/refresh?week=${weekScope}`, {
         method: "POST"
       });
 
@@ -22,7 +22,8 @@ export function RefreshDataButton({ weekScope = "current" }) {
         throw new Error(`refresh failed with ${response.status}`);
       }
 
-      setMessage("Daten aktualisiert.");
+      const payload = await response.json();
+      setMessage(payload?.status?.detail || "Daten aktualisiert.");
       startTransition(() => {
         router.refresh();
       });

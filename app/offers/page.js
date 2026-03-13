@@ -13,6 +13,7 @@ export default async function OffersPage({ searchParams }) {
   const weekScope = resolvedSearchParams.week === "next" ? "next" : "current";
   const offers = listOffers(resolvedSearchParams);
   const categories = listCategories(weekScope);
+  const hasFixtureOffers = offers.some((offer) => offer.sourceType === "fixture");
 
   return (
     <SiteShell>
@@ -28,6 +29,15 @@ export default async function OffersPage({ searchParams }) {
           </div>
           <div className="chip">{offers.length} Produkte</div>
         </div>
+
+        {hasFixtureOffers ? (
+          <div className="card" style={{ marginBottom: "1rem" }}>
+            <h4>Hinweis zum Datenstand</h4>
+            <p className="muted">
+              Ein Teil dieser Angebote kommt aktuell aus Beispieldaten, nicht aus einem live geladenen Händler-Feed.
+            </p>
+          </div>
+        ) : null}
 
         <OffersFilter retailers={RETAILERS} categories={categories} searchParams={resolvedSearchParams} />
 
