@@ -7,11 +7,11 @@ function withWeek(href, weekScope) {
 
 export function WeekScopeSwitcher({ weekScope = "current", href = "/" }) {
   return (
-    <div className="filters" style={{ marginBottom: 12 }}>
-      <Link href={withWeek(href, "current")} className="chip" aria-current={weekScope === "current" ? "page" : undefined}>
+    <div className="week-switcher">
+      <Link href={withWeek(href, "current")} className={`week-tab${weekScope === "current" ? " week-tab--active" : ""}`}>
         Diese Woche
       </Link>
-      <Link href={withWeek(href, "next")} className="chip" aria-current={weekScope === "next" ? "page" : undefined}>
+      <Link href={withWeek(href, "next")} className={`week-tab${weekScope === "next" ? " week-tab--active" : ""}`}>
         Nächste Woche
       </Link>
     </div>
