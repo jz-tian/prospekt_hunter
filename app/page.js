@@ -29,8 +29,8 @@ export default async function HomePage({ searchParams }) {
 
         <div className="retailer-grid">
           {retailers.map((retailer) => (
-            <article className="card retailer-card" key={retailer.slug}>
-              <div className="retailer-accent" style={{ background: retailer.color }} />
+            <article className="card retailer-card" key={retailer.slug} style={{ "--retailer-color": retailer.color }}>
+              <div className="retailer-accent" />
               <img src={`/logos/${retailer.slug}.svg`} alt={retailer.name} className="retailer-logo" />
               <h4>{retailer.offerCount} aktive Angebote</h4>
               <p className="muted">

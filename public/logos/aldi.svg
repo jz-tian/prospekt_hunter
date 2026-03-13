@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" fill="none">
-  <rect width="120" height="48" rx="4" fill="#1650a2"/>
-  <text x="60" y="33" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="900" fill="white" text-anchor="middle" letter-spacing="1">aldi</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 44" fill="none">
+  <!-- Bold geometric A mark -->
+  <path d="M8 34 L16 12 L24 34 M11.5 26 H20.5" stroke="#1650a2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Wordmark -->
+  <text x="30" y="30" font-family="'Arial Black',Arial,sans-serif" font-size="20" font-weight="900" fill="#1650a2" letter-spacing="-0.5">aldi</text>
+  <!-- Thin underline accent -->
+  <line x1="30" y1="36" x2="104" y2="36" stroke="#1650a2" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
 </svg>
