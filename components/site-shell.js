@@ -1,35 +1,47 @@
-import Link from "next/link";
+import { NavLinks } from "@/components/nav-links";
+import { CartHeaderButton } from "@/components/cart-header-button";
 import { ShoppingListDrawer } from "@/components/shopping-list-drawer";
-import { ShoppingListNavLink } from "@/components/shopping-list-nav-link";
 
 export function SiteShell({ children }) {
   return (
-    <div className="shell">
+    <>
       <header className="site-header">
-        <div className="brand">
-          <div className="brand-mark">%</div>
-          <div className="brand-copy">
-            <h1>AngebotsRadar</h1>
-            <p>Prospekte, Preise und Einkaufszettel für diese Woche.</p>
+        <div className="header-top">
+          <div className="header-inner">
+            <div className="brand">
+              <span className="brand-rh">RH·</span>
+              <span className="brand-name">RabattHunter</span>
+            </div>
+
+            <div className="header-search">
+              <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="search"
+                className="search-input"
+                placeholder="Produkte suchen…"
+                disabled
+                aria-label="Produktsuche (demnächst verfügbar)"
+              />
+            </div>
+
+            <CartHeaderButton />
           </div>
         </div>
 
-        <nav className="nav">
-          <Link href="/" className="nav-link">
-            Start
-          </Link>
-          <Link href="/offers" className="nav-link">
-            Angebote
-          </Link>
-          <Link href="/prospekte" className="nav-link">
-            Prospekte
-          </Link>
-          <ShoppingListNavLink />
-        </nav>
+        <div className="header-nav">
+          <div className="header-inner">
+            <NavLinks />
+          </div>
+        </div>
       </header>
 
-      {children}
+      <div className="shell">
+        {children}
+      </div>
+
       <ShoppingListDrawer />
-    </div>
+    </>
   );
 }
