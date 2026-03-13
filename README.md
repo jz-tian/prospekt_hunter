@@ -9,6 +9,7 @@ Stand vom `2026-03-13`:
 - `ALDI` und `Lidl` sind als echte Live-Adapter angebunden
 - `EDEKA` hat jetzt einen echten Live-Adapter für Prospekt-Metadaten und aktuelle Angebotsseiten
 - `REWE` läuft weiter über Fixture-Daten
+- Das Repo ist jetzt unter `https://github.com/jz-tian/prospekt_hunter.git` auf `main` versioniert
 - Startseite, Angebotsliste und Prospektseite lesen ohne implizite Schreibzugriffe direkt aus der lokalen Datenbank
 - Die App unterstützt `current` und `next` week scope
 - Im Produktmodell werden aktuell nur stabile Felder genutzt:
@@ -106,7 +107,10 @@ Stand der letzten lokalen Verifikation vom `2026-03-12`:
 ### ALDI
 
 - Quelle für Prospekt-Übersicht: offizielle ALDI-Prospektseite `https://www.aldi-sued.de/prospekte`
-- Quelle für Angebotsdaten: offizielle ALDI-Angebotsseiten `https://www.aldi-sued.de/angebote/{date}`
+- Primäre Quelle für Angebotsdaten: offizieller ALDI-Publitas-Prospekt
+  - `https://prospekt.aldi-sued.de/<slug>/data.json`
+  - `https://prospekt.aldi-sued.de/<slug>/page/{n}/hotspots_data.json?version=...`
+- Fallback-Quelle: offizielle Angebotsseiten `https://www.aldi-sued.de/angebote/{date}`
 - Bereits live:
   - Prospekt-Links für aktuelle und nächste Woche
   - Angebotsname
@@ -114,16 +118,16 @@ Stand der letzten lokalen Verifikation vom `2026-03-12`:
   - Preis
   - Produktbild
   - Produkt-URL
-  - einfache unitInfo aus Produkt-Tiles
+  - unitInfo aus offiziellen Prospekt-Produkt-Hotspots
   - current/next week Auswahl
 - Technischer Ansatz:
-  - keine separate Viewer-API nötig
-  - strukturierte Daten kommen serverseitig gerendert aus den offiziellen HTML-Seiten
+  - bevorzugt werden offizielle Prospekt-JSONs (`data.json` + `hotspots_data.json`)
+  - die alte HTML-Tile-Extraktion aus `/angebote/{date}` bleibt nur als Fallback erhalten
 
-Stand der letzten lokalen Verifikation vom `2026-03-12`:
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
 
-- ALDI `current`: `29` offers
-- ALDI `next`: `30` offers
+- ALDI `current`: `183` offers, `183` mit Bild
+- ALDI `next`: `30` offers, `30` mit Bild
 
 ### EDEKA
 
@@ -143,6 +147,10 @@ Stand der letzten lokalen Verifikation vom `2026-03-12`:
   - funktioniert, sobald der gewählte Markt auf offiziellen EDEKA-Seiten bereits einen zukünftigen Flyer veröffentlicht
   - Stand `2026-03-13`: in einer lokalen Stichprobe mehrerer offizieller Märkte wurde noch kein Markt mit vorab veröffentlichtem next-week-Flyer gefunden
 
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
+
+- EDEKA `current`: `202` offers, `202` mit Bild
+
 ### REWE
 
 - Noch kein echter Live-Adapter
@@ -151,7 +159,7 @@ Stand der letzten lokalen Verifikation vom `2026-03-12`:
 ## Nächste sinnvolle Schritte
 
 1. Lidl-Kategorisierung verbessern, da Lidl-eigene Kategorien aktuell nur grob auf die gemeinsame Taxonomie gemappt werden
-2. ALDI-Kategorisierung verbessern, da der aktuelle HTML-Tile-Adapter noch keine sauberen Source-Sections liefert
+2. ALDI-Kategorisierung verbessern, da die offiziellen Prospekt-Produkttypen noch nicht sauber auf die gemeinsame Taxonomie gemappt werden
 3. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden, um den live `next`-Pfad gegen echte Daten zu verifizieren
 4. REWE nur dann angehen, wenn für die Cloudflare-Sperre ein tragfähiger Ansatz feststeht
 5. Falls Originalpreis später wieder relevant wird, nur mit einer separaten, sauber validierten Extraktionsstrategie neu einführen

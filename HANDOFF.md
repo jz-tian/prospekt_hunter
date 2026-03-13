@@ -7,6 +7,7 @@ Dieses Repo ist nicht mehr nur ein UI-Mock. Mehrere echte Händler sind bereits 
 - `Lidl` und `ALDI` laufen über Live-Daten
 - `EDEKA` läuft über Live-Prospekt-Metadaten und aktuelle Angebotsseiten
 - `REWE` läuft noch über Fixture-Daten
+- Das Repo ist nach `main` auf `https://github.com/jz-tian/prospekt_hunter.git` gepusht
 
 Die App läuft lokal stabil mit:
 
@@ -122,7 +123,12 @@ Datei:
 1. Prospekt-Übersicht:
    `https://www.aldi-sued.de/prospekte`
 
-2. Angebotsseiten:
+2. Primärer Produktpfad:
+   `https://prospekt.aldi-sued.de/<slug>/data.json`
+   plus
+   `https://prospekt.aldi-sued.de/<slug>/page/{n}/hotspots_data.json?version=...`
+
+3. HTML-Fallback:
    `https://www.aldi-sued.de/angebote/{validFrom}`
 
 ### Was aktuell live kommt
@@ -133,23 +139,26 @@ Datei:
 - Marke
 - Preis
 - Produktbild
-- Produkt-URL
-- einfache unitInfo aus Tile
+- unitInfo aus Prospekt-Produktbeschreibung bzw. Produkttyp
+- current/next week Auswahl
 
-Stand der letzten lokalen Verifikation:
+Stand der letzten lokalen Verifikation vom `2026-03-13`:
 
-- ALDI current week offers: `29`
+- ALDI current week offers: `183`
+- mit Bild: `183`
 - ALDI next week offers: `30`
+- mit Bild: `30`
 
 ### Wichtige Entscheidung
 
-Für ALDI wird aktuell keine separate Viewer- oder JSON-API vorausgesetzt.  
-Der Adapter nutzt die serverseitig gerenderten offiziellen HTML-Seiten:
+Für ALDI ist der HTML-Tile-Ansatz nicht mehr die Primärquelle.  
+Der aktuelle Adapter nutzt:
 
 - `/prospekte` für current/next Prospekt-Erkennung
-- `/angebote/{date}` für Produkt-Tiles
+- den offiziellen Publitas-Prospekt für vollständige Produkt-Hotspots
+- `/angebote/{date}` nur noch als Fallback
 
-Das ist für den aktuellen MVP robuster als auf unklare interne Frontend-Endpoints zu spekulieren.
+Grund: Die aktuelle ALDI-`/angebote/{date}`-Seite liefert für `current` nicht mehr stabil alle Produkte serverseitig gerendert. Die offiziellen Prospekt-Hotspots liefern dagegen vollständige Produktlisten inklusive Bilder.
 
 ## Important Constraints
 
@@ -169,6 +178,7 @@ Das ist für den aktuellen MVP robuster als auf unklare interne Frontend-Endpoin
 - gemeinsame Kategorien sind bereits vorhanden
 - Lidl-spezifische Kategorien werden aktuell nur über einfache Textregeln gemappt
 - manche Zuordnungen sind fachlich noch ungenau
+- ALDI-Produkttypen aus den Prospekt-Hotspots werden aktuell noch nur grob gemappt
 
 ## Files Worth Reading First
 
@@ -180,16 +190,17 @@ Das ist für den aktuellen MVP robuster als auf unklare interne Frontend-Endpoin
 
 ## Known Gaps
 
-1. ALDI-Kategorien sind noch ungenau, weil der aktuelle Adapter aus den HTML-Tiles keine sauberen Source-Sections bekommt.
+1. ALDI-Kategorien sind noch ungenau, weil die offiziellen Prospekt-Produkttypen noch nicht sauber auf die gemeinsame Taxonomie gemappt werden.
 2. Es gibt noch keine persistente Rohdatenablage für HTML/PDF Snapshots je Ingest-Lauf.
 3. Es gibt noch kein Admin-UI für "needs review" oder manuelle Korrekturen.
-4. REWE und EDEKA sind noch nicht live.
+4. Es gibt noch keine echte REWE-Live-Anbindung.
+5. EDEKA `next` week ist nur live, wenn der gewählte Markt bereits offiziell einen zukünftigen Flyer veröffentlicht hat.
 
 ## Best Next Steps
 
 1. ALDI-Kategorien verbessern.
 2. Lidl-Kategorien verbessern.
-3. Als dritten echten Adapter `EDEKA` oder `REWE` anbinden.
+3. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden und den `next`-Pfad gegen Live-Daten verifizieren.
 4. Falls Originalpreis später wieder zurückkommen soll, komplett separat neu designen und nicht auf dem alten Codepfad wieder aufbauen.
 
 ## Practical Warning
