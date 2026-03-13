@@ -744,8 +744,7 @@ button, input, select, textarea {
   transition: border-color 160ms, color 160ms;
 }
 
-.chip:hover,
-.chip[aria-current="page"] {
+.chip:hover {
   border-color: var(--green);
   color: var(--green);
   background: var(--green-light);
@@ -813,7 +812,7 @@ button, input, select, textarea {
   color: #ffffff;
 }
 
-.hero > .hero-panel > p {
+.hero-panel > p {
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.9rem;
   margin: 0 0 24px;
@@ -898,6 +897,11 @@ button, input, select, textarea {
   margin: 0;
   font-size: 0.75rem;
   opacity: 0.65;
+}
+
+.category-icon {
+  font-size: 2rem;
+  line-height: 1;
 }
 
 /* ── WeekScopeSwitcher ──────────────────────────────────────── */
@@ -1102,5 +1106,15 @@ button, input, select, textarea {
   .offer-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .offers-grid .offer-card,
+  .retailer-grid .retailer-card,
+  .category-grid .category-card,
+  .prospekt-grid .prospekt-card {
+    animation: none;
   }
 }

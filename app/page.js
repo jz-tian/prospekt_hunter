@@ -100,7 +100,7 @@ export default async function HomePage({ searchParams }) {
               key={category.slug}
               style={{ background: category.tone, color: category.textColor }}
             >
-              <div style={{ fontSize: "2rem", lineHeight: 1 }}>{category.emoji ?? "🛒"}</div>
+              <div className="category-icon">{category.emoji ?? "🛒"}</div>
               <div>
                 <h4>{category.name}</h4>
                 <p>{category.offerCount} Angebote</p>
