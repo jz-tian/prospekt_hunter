@@ -70,7 +70,7 @@ export default async function HomePage({ searchParams }) {
           {retailers.map((retailer) => (
             <article className="card retailer-card" key={retailer.slug}>
               <div className="retailer-accent" style={{ background: retailer.color }} />
-              <span className="retailer-pill">{retailer.name}</span>
+              <img src={`/logos/${retailer.slug}.svg`} alt={retailer.name} className="retailer-logo" />
               <h4>{retailer.offerCount} aktive Angebote</h4>
               <p className="muted">
                 {retailer.validFrom && retailer.validTo ? `Gültig ${formatDateRange(retailer.validFrom, retailer.validTo)}` : "Noch kein Prospekt"}

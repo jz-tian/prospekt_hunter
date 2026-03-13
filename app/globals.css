@@ -333,16 +333,12 @@ button, input, select, textarea {
   padding: 14px 16px 16px;
 }
 
-.retailer-pill {
-  display: inline-block;
-  background: var(--green-light);
-  color: var(--green);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.retailer-logo {
+  display: block;
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .offer-title {
