@@ -1,0 +1,21 @@
+{
+  "name": "supermarket-discount",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "he": "^1.2.0",
+    "next": "15.2.4",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.5.207",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  }
+}
