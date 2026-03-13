@@ -1,5 +1,6 @@
 import { AddToListButton } from "@/components/add-to-list-button";
 import { formatDateRange, formatEuro } from "@/lib/format";
+import { RETAILERS } from "@/lib/constants";
 
 export function OfferCard({ offer }) {
   const displayPrice = offer.priceLabel || formatEuro(offer.salePrice);
@@ -10,8 +11,10 @@ export function OfferCard({ offer }) {
       ? Math.round((1 - offer.salePrice / offer.originalPrice) * 100)
       : null;
 
+  const retailerColor = RETAILERS.find((r) => r.slug === offer.retailerSlug)?.color ?? "#2a6b3c";
+
   return (
-    <article className="card offer-card">
+    <article className="card offer-card" style={{ "--retailer-color": retailerColor }}>
       <div className="offer-image-wrap">
         {offer.imageUrl ? (
           <img className="offer-image" src={offer.imageUrl} alt={offer.productName} loading="lazy" />
