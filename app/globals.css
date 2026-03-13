@@ -1014,3 +1014,83 @@ button, input, select, textarea {
   box-shadow: var(--shadow);
   padding: 20px;
 }
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Offer cards */
+.offers-grid .offer-card { animation: fadeSlideUp 200ms ease-out both; }
+.offers-grid .offer-card:nth-child(1)  { animation-delay:   0ms; }
+.offers-grid .offer-card:nth-child(2)  { animation-delay:  30ms; }
+.offers-grid .offer-card:nth-child(3)  { animation-delay:  60ms; }
+.offers-grid .offer-card:nth-child(4)  { animation-delay:  90ms; }
+.offers-grid .offer-card:nth-child(5)  { animation-delay: 120ms; }
+.offers-grid .offer-card:nth-child(6)  { animation-delay: 150ms; }
+.offers-grid .offer-card:nth-child(7)  { animation-delay: 180ms; }
+.offers-grid .offer-card:nth-child(8)  { animation-delay: 210ms; }
+.offers-grid .offer-card:nth-child(9)  { animation-delay: 240ms; }
+.offers-grid .offer-card:nth-child(10) { animation-delay: 270ms; }
+
+/* Retailer cards */
+.retailer-grid .retailer-card { animation: fadeSlideUp 200ms ease-out both; }
+.retailer-grid .retailer-card:nth-child(1)  { animation-delay:   0ms; }
+.retailer-grid .retailer-card:nth-child(2)  { animation-delay:  30ms; }
+.retailer-grid .retailer-card:nth-child(3)  { animation-delay:  60ms; }
+.retailer-grid .retailer-card:nth-child(4)  { animation-delay:  90ms; }
+.retailer-grid .retailer-card:nth-child(5)  { animation-delay: 120ms; }
+
+/* Category cards */
+.category-grid .category-card { animation: fadeSlideUp 200ms ease-out both; }
+.category-grid .category-card:nth-child(1)  { animation-delay:   0ms; }
+.category-grid .category-card:nth-child(2)  { animation-delay:  30ms; }
+.category-grid .category-card:nth-child(3)  { animation-delay:  60ms; }
+.category-grid .category-card:nth-child(4)  { animation-delay:  90ms; }
+.category-grid .category-card:nth-child(5)  { animation-delay: 120ms; }
+.category-grid .category-card:nth-child(6)  { animation-delay: 150ms; }
+.category-grid .category-card:nth-child(7)  { animation-delay: 180ms; }
+.category-grid .category-card:nth-child(8)  { animation-delay: 210ms; }
+.category-grid .category-card:nth-child(9)  { animation-delay: 240ms; }
+.category-grid .category-card:nth-child(10) { animation-delay: 270ms; }
+
+/* Prospekt cards */
+.prospekt-grid .prospekt-card { animation: fadeSlideUp 200ms ease-out both; }
+.prospekt-grid .prospekt-card:nth-child(1)  { animation-delay:   0ms; }
+.prospekt-grid .prospekt-card:nth-child(2)  { animation-delay:  30ms; }
+.prospekt-grid .prospekt-card:nth-child(3)  { animation-delay:  60ms; }
+.prospekt-grid .prospekt-card:nth-child(4)  { animation-delay:  90ms; }
+.prospekt-grid .prospekt-card:nth-child(5)  { animation-delay: 120ms; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 980px) {
+  .hero,
+  .shopping-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .shell {
+    width: min(calc(100% - 24px), var(--max-width));
+    padding-top: 20px;
+  }
+
+  .hero-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filters form {
+    flex-direction: column;
+  }
+
+  .offer-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
