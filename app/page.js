@@ -23,16 +23,16 @@ export default async function HomePage({ searchParams }) {
       <section className="hero">
         <div className="hero-panel">
           <div className="eyebrow">{weekLabel}</div>
-          <h2>Alle Prospekte. Alle Preise. Ein Einkaufszettel.</h2>
+          <h2>Alle Deals.<br />Ein Blick.</h2>
           <p>
-            AngebotsRadar bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns BioMarkt, NORMA und EDEKA, kategorisiert sie automatisch
-            und macht daraus eine nutzbare Preisübersicht mit Einkaufsliste.
+            RabattHunter bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns, NORMA und EDEKA —
+            kategorisiert, gefiltert, auf einen Blick.
           </p>
           <div className="hero-actions">
             <Link href={`/offers?week=${weekScope}`} className="cta">
               Angebote ansehen
             </Link>
-            <Link href={`/prospekte?week=${weekScope}`} className="ghost-button">
+            <Link href={`/prospekte?week=${weekScope}`} className="ghost-button hero-ghost">
               Prospekte prüfen
             </Link>
           </div>
@@ -100,11 +100,11 @@ export default async function HomePage({ searchParams }) {
               key={category.slug}
               style={{ background: category.tone, color: category.textColor }}
             >
+              <div style={{ fontSize: "2rem", lineHeight: 1 }}>{category.emoji ?? "🛒"}</div>
               <div>
                 <h4>{category.name}</h4>
                 <p>{category.offerCount} Angebote</p>
               </div>
-              <div className="category-blob" />
             </Link>
           ))}
         </div>
