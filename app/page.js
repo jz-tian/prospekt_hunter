@@ -23,7 +23,7 @@ export default async function HomePage({ searchParams }) {
       <section className="hero">
         <div className="hero-panel">
           <div className="eyebrow">{weekLabel}</div>
-          <h2>Alle Deals.<br />Ein Blick.</h2>
+          <h1>Alle Deals.<br />Ein Blick.</h1>
           <p>
             RabattHunter bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns, NORMA und EDEKA —
             kategorisiert, gefiltert, auf einen Blick.
