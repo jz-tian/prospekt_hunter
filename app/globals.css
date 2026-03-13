@@ -866,18 +866,19 @@ button, input, select, textarea {
 /* ── Category grid ──────────────────────────────────────────── */
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
 }
 
 .category-card {
-  height: 140px;
-  padding: 16px;
+  height: 100px;
+  padding: 14px 16px;
   border-radius: var(--radius-card);
   border: 1px solid rgba(0, 0, 0, 0.07);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  position: relative;
   transition: transform 160ms ease, box-shadow 160ms ease;
   overflow: hidden;
 }
@@ -888,20 +889,32 @@ button, input, select, textarea {
 }
 
 .category-card h4 {
-  margin: 8px 0 2px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin: 0 0 3px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
 }
 
 .category-card p {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   opacity: 0.65;
+  position: relative;
+  z-index: 1;
 }
 
 .category-icon {
-  font-size: 2rem;
+  position: absolute;
+  right: 10px;
+  bottom: -4px;
+  font-size: 3.8rem;
   line-height: 1;
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
 }
 
 /* ── WeekScopeSwitcher ──────────────────────────────────────── */
