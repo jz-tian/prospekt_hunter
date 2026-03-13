@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const weekScope = resolvedSearchParams.week === "next" ? "next" : "current";
-  const { retailers, featuredOffers, categories, stats } = getDashboardData(weekScope);
+  const { retailers, featuredOffers, categories } = getDashboardData(weekScope);
   const weekLabel = weekScope === "next" ? "Nächste Woche" : "Diese Woche";
 
   return (
@@ -20,50 +20,11 @@ export default async function HomePage({ searchParams }) {
         <WeekScopeSwitcher weekScope={weekScope} href="/" />
         <RefreshDataButton weekScope={weekScope} />
       </div>
-      <section className="hero">
-        <div className="hero-panel">
-          <div className="eyebrow">{weekLabel}</div>
-          <h1>Alle Deals.<br />Ein Blick.</h1>
-          <p>
-            RabattHunter bündelt die aktuellen Wochenangebote von ALDI, Lidl, Denns, NORMA und EDEKA —
-            kategorisiert, gefiltert, auf einen Blick.
-          </p>
-          <div className="hero-actions">
-            <Link href={`/offers?week=${weekScope}`} className="cta">
-              Angebote ansehen
-            </Link>
-            <Link href={`/prospekte?week=${weekScope}`} className="ghost-button hero-ghost">
-              Prospekte prüfen
-            </Link>
-          </div>
-        </div>
-
-        <div className="hero-stats">
-          <div className="stat">
-            Märkte
-            <strong>{stats.retailerCount}</strong>
-          </div>
-          <div className="stat">
-            Prospekte
-            <strong>{stats.prospektCount}</strong>
-          </div>
-          <div className="stat">
-            Angebote
-            <strong>{stats.offerCount}</strong>
-          </div>
-          <div className="stat">
-            Review nötig
-            <strong>{stats.reviewCount}</strong>
-          </div>
-        </div>
-      </section>
-
       <section className="section">
-        <div className="section-header">
-          <div>
-            <h3>Marktstatus</h3>
-            <p>Jeder Markt zeigt die aktive Prospekt-Woche und die aktuell erkannten Angebote.</p>
-          </div>
+        <div className="section-header section-header--centered">
+          <div className="eyebrow">{weekLabel}</div>
+          <h3>Marktstatus</h3>
+          <p>Aktuelle Prospekt-Woche und erkannte Angebote je Händler.</p>
         </div>
 
         <div className="retailer-grid">
