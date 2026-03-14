@@ -4,7 +4,7 @@
 
 Aggregates weekly deals from five major German supermarkets (ALDI, Lidl, NORMA, EDEKA, Denns BioMarkt), categorises them automatically, and presents them in a filterable, mobile-friendly interface. Data is fetched in real time from official retailer APIs and HTML pages — no third-party data providers.
 
-**Live demo:** [rabatthunter.vercel.app](https://rabatthunter.vercel.app) · **Portfolio:** [jiazheng.dev](https://jiazheng.dev)
+**Live demo:** [rabatthunter.vercel.app](https://rabatthunter.vercel.app) · **Portfolio:** [jz-tian.github.io](https://jz-tian.github.io)
 
 ---
 
@@ -22,7 +22,7 @@ Aggregates weekly deals from five major German supermarkets (ALDI, Lidl, NORMA, 
 | **Export** | Export cart as plain text or CSV |
 | **Prospekte overview** | Browse flyer covers and validity dates per retailer |
 | **Admin ingest** | Password-protected "Refresh data" button that triggers a live scrape |
-| **Responsive** | Fully usable on mobile; drawer z-index correctly stacked above the header |
+| **Responsive** | Fully usable on mobile |
 | **PWA-ready** | Custom SVG favicon, theme colour, Open Graph meta |
 
 ---
@@ -53,7 +53,7 @@ app/
     ├── offers/                # GET offers (filtered)
     ├── categories/            # GET distinct categories
     ├── prospekte/             # GET flyer metadata
-    ├── shopping-list/         # CRUD shopping cart (stored in DB per-session)
+    ├── shopping-list/         # CRUD shopping cart
     ├── refresh/               # POST — triggers ingest (password-protected)
     └── admin/ingest/          # POST run / GET status
 
@@ -81,7 +81,7 @@ lib/
 
 **Data flow:**
 
-1. A POST to `/api/refresh` (or `/api/admin/ingest/run`) triggers `runIngestion(weekScope)`.
+1. A POST to `/api/refresh` triggers `runIngestion(weekScope)`.
 2. Each adapter fetches from the retailer's official public endpoints (no login required).
 3. Offers are written to Turso; the classifier assigns categories in a single batch update.
 4. The Next.js page re-fetches via `router.refresh()` — no full reload needed.
@@ -93,7 +93,7 @@ lib/
 ### Prerequisites
 
 - Node.js 20+
-- A local SQLite file is used automatically in development — no Turso account needed to get started.
+- No Turso account needed — a local SQLite file is used automatically in development.
 
 ### Setup
 
@@ -106,13 +106,11 @@ npm install
 Create `.env.local`:
 
 ```env
-# Local dev — uses an embedded SQLite file, no cloud account needed
 TURSO_DATABASE_URL=file:.data/local.db
 ADMIN_PASSWORD=your-admin-password
 
-# Retailer-specific market configuration
-EDEKA_MARKET_ID=10003350          # Find your EDEKA market ID on edeka.de
-DENNS_MARKET_SLUG=muenchen-regerstr  # Slug from biomarkt.de/<slug>/angebote
+EDEKA_MARKET_ID=10003350
+DENNS_MARKET_SLUG=muenchen-regerstr
 ```
 
 ```bash
@@ -121,74 +119,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Run an ingest
+### Fetching live data
 
-The database starts empty. Click **"Daten aktualisieren"** in the header (uses the password from `ADMIN_PASSWORD`), or run:
+The database starts empty. Click **"Daten aktualisieren"** in the header and enter your `ADMIN_PASSWORD`, or use curl:
 
 ```bash
+# Current week
 curl -X POST 'http://localhost:3000/api/refresh?week=current' \
   -H 'Authorization: Bearer your-admin-password'
-```
 
-For next week's data:
-
-```bash
+# Next week
 curl -X POST 'http://localhost:3000/api/refresh?week=next' \
   -H 'Authorization: Bearer your-admin-password'
 ```
 
 ### Finding your market IDs
 
-**EDEKA** — navigate to your local EDEKA on [edeka.de](https://edeka.de), select a store, and extract the numeric ID from the URL (e.g. `10003350`).
+**EDEKA** — go to [edeka.de](https://edeka.de), select your store, and extract the numeric ID from the URL (e.g. `10003350`).
 
 **Denns BioMarkt** — go to [biomarkt.de](https://www.biomarkt.de), select your store, and copy the slug from the URL (e.g. `muenchen-regerstr`).
-
----
-
-## Deploying to Vercel
-
-### 1 — Create a Turso database
-
-```bash
-npm install -g @turso/cli
-turso auth login
-turso db create rabatthunter
-```
-
-To seed with existing local data:
-
-```bash
-turso db create rabatthunter --from-file .data/local.db
-```
-
-Get the connection details:
-
-```bash
-turso db show rabatthunter        # copy the libsql:// URL
-turso db tokens create rabatthunter
-```
-
-### 2 — Set environment variables in Vercel
-
-In your Vercel project → **Settings → Environment Variables**, add:
-
-| Variable | Value |
-|---|---|
-| `TURSO_DATABASE_URL` | `libsql://rabatthunter-<your-org>.turso.io` |
-| `TURSO_AUTH_TOKEN` | *(token from step 1)* |
-| `ADMIN_PASSWORD` | A strong password for the ingest button |
-| `EDEKA_MARKET_ID` | Your EDEKA market ID |
-| `DENNS_MARKET_SLUG` | Your Denns market slug |
-
-### 3 — Deploy
-
-```bash
-vercel --prod
-```
-
-Or connect the GitHub repo in the Vercel dashboard for automatic deploys on push.
-
-> **Note:** Vercel functions are serverless — the filesystem is ephemeral. Turso is the only persistent store. All data survives deploys and cold starts.
 
 ---
 
@@ -206,33 +155,10 @@ All adapters use plain `fetch` — no browser automation, no Puppeteer, no paid 
 
 ---
 
-## Database Schema
-
-```sql
--- Ingest run metadata (one row per scrape job)
-ingest_runs (id, week_scope, started_at, completed_at, offer_count, status, detail)
-
--- Retailer flyer metadata
-issues (id, retailer, week_scope, title, valid_from, valid_to, flyer_url, cover_url, ingest_run_id)
-
--- Individual offer records
-offers (id, issue_id, retailer, week_scope, name, brand, price, original_price,
-        promo_label, image_url, product_url, description, valid_from, valid_to,
-        source_section, category, ingest_run_id)
-
--- Shopping cart (client-side session key)
-shopping_items (id, session_key, offer_id, quantity, checked, added_at)
-
--- App-level key-value flags (e.g. seed version)
-app_state (key, value)
-```
-
----
-
 ## License
 
 MIT — feel free to fork, adapt, or use as a reference for your own portfolio projects.
 
 ---
 
-*Built by [Jiazheng Tian](https://jiazheng.dev) · Next.js 15 · Turso · React 19*
+*Built by [Jiazheng Tian](https://jz-tian.github.io) · Next.js 15 · Turso · React 19*
