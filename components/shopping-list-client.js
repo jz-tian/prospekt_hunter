@@ -26,6 +26,11 @@ function buildGroupedSummaries(items) {
 export function ShoppingListClient({ initialItems }) {
   const [items, setItems] = useState(initialItems);
   const [exportStatus, setExportStatus] = useState("");
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    setCanShare(typeof navigator.share === "function");
+  }, []);
 
   useEffect(() => {
     async function refresh() {
@@ -35,10 +40,7 @@ export function ShoppingListClient({ initialItems }) {
 
     refresh();
 
-    function handleUpdate() {
-      refresh();
-    }
-
+    function handleUpdate() { refresh(); }
     window.addEventListener("shopping-list-updated", handleUpdate);
     return () => window.removeEventListener("shopping-list-updated", handleUpdate);
   }, []);
@@ -46,9 +48,7 @@ export function ShoppingListClient({ initialItems }) {
   async function mutateItem(id, payload) {
     await fetch(`/api/shopping-list/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
@@ -58,10 +58,7 @@ export function ShoppingListClient({ initialItems }) {
   }
 
   async function removeItem(id) {
-    await fetch(`/api/shopping-list/${id}`, {
-      method: "DELETE"
-    });
-
+    await fetch(`/api/shopping-list/${id}`, { method: "DELETE" });
     const next = await fetchList();
     setItems(next.items);
     window.dispatchEvent(new CustomEvent("shopping-list-updated"));
@@ -71,19 +68,22 @@ export function ShoppingListClient({ initialItems }) {
   const retailerSummaries = buildGroupedSummaries(items);
   const retailerCount = retailerSummaries.length;
 
-  function buildPlainTextExport() {
-    const lines = ["Einkaufsliste", ""];
+  function flash(msg) {
+    setExportStatus(msg);
+    setTimeout(() => setExportStatus(""), 2000);
+  }
 
+  function buildPlainText() {
+    const lines = ["Einkaufsliste", ""];
     for (const summary of retailerSummaries) {
       lines.push(`${summary.retailerName} · ${formatEuro(summary.total)}`);
-
       for (const item of summary.items) {
-        lines.push(`${item.checked ? "☑" : "☐"} ${item.quantity}x ${item.productName} (${formatEuro(item.salePrice)})`);
+        let line = `${item.checked ? "☑" : "☐"} ${item.quantity}x ${item.productName} (${formatEuro(item.salePrice)})`;
+        if (item.note) line += ` — ${item.note}`;
+        lines.push(line);
       }
-
       lines.push("");
     }
-
     lines.push(`Gesamtsumme: ${formatEuro(total)}`);
     return lines.join("\n");
   }
@@ -92,68 +92,52 @@ export function ShoppingListClient({ initialItems }) {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
-
     anchor.href = url;
     anchor.download = filename;
     anchor.click();
-
     URL.revokeObjectURL(url);
   }
 
-  async function copyPlainTextExport() {
-    const content = buildPlainTextExport();
-
+  async function copyText() {
     try {
-      await navigator.clipboard.writeText(content);
-      setExportStatus("Textliste kopiert");
+      await navigator.clipboard.writeText(buildPlainText());
+      flash("Textliste kopiert");
     } catch {
-      setExportStatus("Kopieren fehlgeschlagen");
+      flash("Kopieren fehlgeschlagen");
     }
   }
 
-  function downloadCsvExport() {
+  async function shareText() {
+    try {
+      await navigator.share({ title: "Einkaufsliste", text: buildPlainText() });
+    } catch {
+      // user cancelled — silently ignore
+    }
+  }
+
+  function downloadTxt() {
+    downloadFile("einkaufsliste.txt", buildPlainText(), "text/plain;charset=utf-8");
+    flash("Textdatei exportiert");
+  }
+
+  function downloadCsv() {
     const rows = [
-      ["Retailer", "Status", "Product", "Quantity", "Unit Price", "Line Total", "Checked"],
+      ["Retailer", "Produkt", "Menge", "Einzelpreis", "Gesamt", "Notiz", "Erledigt"],
       ...items.map((item) => [
         item.retailerName,
-        item.checked ? "done" : "open",
         item.productName,
         String(item.quantity),
         item.salePrice.toFixed(2),
         (item.salePrice * item.quantity).toFixed(2),
-        item.checked ? "yes" : "no"
+        item.note ?? "",
+        item.checked ? "ja" : "nein"
       ])
     ];
-
-    const content = rows
-      .map((row) => row.map((value) => `"${String(value).replaceAll("\"", "\"\"")}"`).join(","))
-      .join("\n");
-
+    // UTF-8 BOM so Excel on Windows opens German characters correctly
+    const bom = "\uFEFF";
+    const content = bom + rows.map((row) => row.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(",")).join("\n");
     downloadFile("einkaufsliste.csv", content, "text/csv;charset=utf-8");
-    setExportStatus("CSV exportiert");
-  }
-
-  function downloadTextExport() {
-    downloadFile("einkaufsliste.txt", buildPlainTextExport(), "text/plain;charset=utf-8");
-    setExportStatus("Textdatei exportiert");
-  }
-
-  async function exportToNotes() {
-    const response = await fetch("/api/shopping-list/export-notes", {
-      method: "POST"
-    });
-
-    const payload = await response.json();
-    setExportStatus(payload.message ?? (response.ok ? "An Notizen exportiert" : "Export fehlgeschlagen"));
-  }
-
-  async function exportToReminders() {
-    const response = await fetch("/api/shopping-list/export-reminders", {
-      method: "POST"
-    });
-
-    const payload = await response.json();
-    setExportStatus(payload.message ?? (response.ok ? "In Erinnerungen exportiert" : "Export fehlgeschlagen"));
+    flash("CSV exportiert");
   }
 
   return (
@@ -189,17 +173,11 @@ export function ShoppingListClient({ initialItems }) {
                   </div>
                   <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                     <div className="quantity-controls">
-                      <button className="icon-button" type="button" onClick={() => mutateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}>
-                        -
-                      </button>
+                      <button className="icon-button" type="button" onClick={() => mutateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}>-</button>
                       <span>{item.quantity}</span>
-                      <button className="icon-button" type="button" onClick={() => mutateItem(item.id, { quantity: item.quantity + 1 })}>
-                        +
-                      </button>
+                      <button className="icon-button" type="button" onClick={() => mutateItem(item.id, { quantity: item.quantity + 1 })}>+</button>
                     </div>
-                    <button className="ghost-button" type="button" onClick={() => removeItem(item.id)}>
-                      Entfernen
-                    </button>
+                    <button className="ghost-button" type="button" onClick={() => removeItem(item.id)}>Entfernen</button>
                   </div>
                 </div>
               ))}
@@ -226,7 +204,7 @@ export function ShoppingListClient({ initialItems }) {
             <strong>{formatEuro(total)}</strong>
           </div>
         </div>
-        {retailerSummaries.length > 0 ? (
+        {retailerSummaries.length > 0 && (
           <div className="retailer-summary-list">
             {retailerSummaries.map((summary) => (
               <div className="info-row" key={summary.retailerName}>
@@ -235,25 +213,37 @@ export function ShoppingListClient({ initialItems }) {
               </div>
             ))}
           </div>
-        ) : null}
+        )}
         <div className="export-actions">
-          <button type="button" className="cta" onClick={exportToReminders} disabled={items.length === 0}>
-            In Erinnerungen exportieren
-          </button>
-          <button type="button" className="ghost-button" onClick={exportToNotes} disabled={items.length === 0}>
-            In Notizen exportieren
-          </button>
-          <button type="button" className="ghost-button" onClick={copyPlainTextExport} disabled={items.length === 0}>
-            Text kopieren
-          </button>
-          <button type="button" className="ghost-button" onClick={downloadTextExport} disabled={items.length === 0}>
+          {canShare ? (
+            <button type="button" className="cta" onClick={shareText} disabled={items.length === 0}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              Teilen
+            </button>
+          ) : (
+            <button type="button" className="cta" onClick={copyText} disabled={items.length === 0}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Text kopieren
+            </button>
+          )}
+          <button type="button" className="ghost-button" onClick={downloadTxt} disabled={items.length === 0}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
             TXT exportieren
           </button>
-          <button type="button" className="ghost-button" onClick={downloadCsvExport} disabled={items.length === 0}>
+          <button type="button" className="ghost-button" onClick={downloadCsv} disabled={items.length === 0}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="8" y2="17"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="16" y1="13" x2="16" y2="17"/>
+            </svg>
             CSV exportieren
           </button>
         </div>
-        {exportStatus ? <div className="muted export-status">{exportStatus}</div> : null}
+        {exportStatus && <div className="muted export-status">{exportStatus}</div>}
       </aside>
     </div>
   );

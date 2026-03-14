@@ -1,228 +1,238 @@
-# AngebotsRadar
+# RabattHunter
 
-AngebotsRadar ist ein lokales Next.js-Webapp-MVP für die Aggregation von Wochenangeboten aus den Prospekten von `ALDI`, `Lidl`, `Denns BioMarkt`, `NORMA` und `EDEKA`.
+**Live German supermarket discount tracker — built as a full-stack portfolio project.**
 
-## Status
+Aggregates weekly deals from five major German supermarkets (ALDI, Lidl, NORMA, EDEKA, Denns BioMarkt), categorises them automatically, and presents them in a filterable, mobile-friendly interface. Data is fetched in real time from official retailer APIs and HTML pages — no third-party data providers.
 
-Stand vom `2026-03-13`:
+**Live demo:** [rabatthunter.vercel.app](https://rabatthunter.vercel.app) · **Portfolio:** [jiazheng.dev](https://jiazheng.dev)
 
-- `ALDI` und `Lidl` sind als echte Live-Adapter angebunden
-- `EDEKA` hat jetzt einen echten Live-Adapter für Prospekt-Metadaten und aktuelle Angebotsseiten
-- `Denns BioMarkt` ist jetzt als Live-Adapter über die offizielle Angebotsseite mit strukturierter `page-data` angebunden
-- `NORMA` ist jetzt als Live-Adapter über die offizielle Angebots-HTML-Navigation und Themenwelten angebunden
-- Das Repo ist jetzt unter `https://github.com/jz-tian/prospekt_hunter.git` auf `main` versioniert
-- Startseite, Angebotsliste und Prospektseite lesen ohne implizite Schreibzugriffe direkt aus der lokalen Datenbank
-- Die App unterstützt `current` und `next` week scope
-- Die Einkaufsliste ist als globale Drawer-Ansicht verfügbar und unterstützt Summen pro Markt, Gesamtsumme und Export
-- Die gemeinsame Kategorisierung wurde auf feinere Regeln mit `Sonstige`-Fallback umgestellt und mehrfach gegen Fehlklassifizierungen nachgeschärft
-- Im Produktmodell werden aktuell nur stabile Felder genutzt:
-  - Produktname
-  - Marke
-  - aktueller Angebotspreis
-  - offizieller Streichpreis, wenn die Quelle ihn sauber liefert
-  - Promo-Label für offizielle Coupon-Karten ohne Euro-Preis
-  - Produktbild
-  - Produkt-URL
-  - Kategorie / Beschreibung / Gültigkeit
-- Rabatt-Prozent als eigener numerischer Kernwert bleibt weiterhin außen vor
+---
 
-## Enthalten
+## Features
 
-- Next.js App Router Frontend mit Startseite, Angebotsliste, Prospektübersicht und Einkaufsliste
-- SQLite-basierte lokale Persistenz über `node:sqlite`
-- Interne API-Routen für Angebote, Prospekte, Kategorien, Einkaufsliste und Admin-Ingest
-- Adapter-Architektur für Prospekt-Ingestion
-- Fixture-basierte Seed-Daten für Start- und Demo-Zustände
-- Echte Live-Adapter für `ALDI`, `Lidl`, `Denns BioMarkt`, `NORMA` und `EDEKA`
-- Globale Einkaufsliste als Floating Drawer mit Mengen, Häkchen, Summen und Clear-Aktionen
-- Export der Einkaufsliste als Text, TXT und CSV; auf lokalem macOS zusätzlich nach Notizen und Erinnerungen
+| Feature | Details |
+|---|---|
+| **5 live retailer adapters** | ALDI Süd, Lidl, NORMA, EDEKA, Denns BioMarkt |
+| **Current + next week** | Toggle between the active and upcoming weekly flyer |
+| **Auto-categorisation** | Rule-based classifier assigns every offer a category (Obst & Gemüse, Fleisch, Getränke, …) |
+| **Retailer filter** | Toggle individual retailers on/off |
+| **Category filter** | Filter by product category |
+| **Search** | Full-text search across offer names |
+| **Shopping list** | Add offers to a persistent cart, check them off, see per-retailer and total costs |
+| **Export** | Export cart as plain text or CSV |
+| **Prospekte overview** | Browse flyer covers and validity dates per retailer |
+| **Admin ingest** | Password-protected "Refresh data" button that triggers a live scrape |
+| **Responsive** | Fully usable on mobile; drawer z-index correctly stacked above the header |
+| **PWA-ready** | Custom SVG favicon, theme colour, Open Graph meta |
 
-## Start
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router, React 19) |
+| Database | [Turso](https://turso.tech) (libSQL — cloud SQLite, free tier) |
+| DB client | `@libsql/client` |
+| Styling | Plain CSS (no UI library) |
+| Fonts | DM Sans + Bricolage Grotesque (Google Fonts via Next.js) |
+| Deployment | Vercel (serverless, zero config) |
+| Data sources | Official retailer APIs & HTML pages (no third-party data provider) |
+
+---
+
+## Architecture
+
+```
+app/
+├── page.js                    # Home — offer grid with filters
+├── prospekte/page.js          # Flyer overview
+├── layout.js                  # Root layout, metadata, fonts
+├── globals.css                # All styles
+└── api/
+    ├── offers/                # GET offers (filtered)
+    ├── categories/            # GET distinct categories
+    ├── prospekte/             # GET flyer metadata
+    ├── shopping-list/         # CRUD shopping cart (stored in DB per-session)
+    ├── refresh/               # POST — triggers ingest (password-protected)
+    └── admin/ingest/          # POST run / GET status
+
+components/
+├── site-shell.js              # Header, search, nav, shopping drawer trigger
+├── offers-filter.js           # Retailer + category filter UI
+├── shopping-list-drawer.js    # Slide-in cart panel
+├── shopping-list-client.js    # Cart item interactions
+├── demo-banner.js             # Dismissible portfolio banner
+└── refresh-data-button.js     # Admin password gate + ingest trigger
+
+lib/
+├── db.js                      # Turso client, schema init, all DB queries
+├── classification.js          # Rule-based offer categoriser
+├── constants.js               # Retailer IDs, category list
+└── ingest/
+    ├── index.js               # Orchestrates a full ingest run
+    └── adapters/
+        ├── aldi.js            # ALDI Süd — Publitas JSON + HTML fallback
+        ├── lidl.js            # Lidl — leaflets.schwarz v4 API
+        ├── norma.js           # NORMA — HTML scrape of themed offer pages
+        ├── edeka.js           # EDEKA — market-specific JSP + page-data
+        └── denns.js           # Denns BioMarkt — Gatsby page-data JSON
+```
+
+**Data flow:**
+
+1. A POST to `/api/refresh` (or `/api/admin/ingest/run`) triggers `runIngestion(weekScope)`.
+2. Each adapter fetches from the retailer's official public endpoints (no login required).
+3. Offers are written to Turso; the classifier assigns categories in a single batch update.
+4. The Next.js page re-fetches via `router.refresh()` — no full reload needed.
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- A local SQLite file is used automatically in development — no Turso account needed to get started.
+
+### Setup
 
 ```bash
+git clone https://github.com/jz-tian/prospekt_hunter.git
+cd prospekt_hunter
 npm install
-npm run build
-npm run start -- --hostname 127.0.0.1 --port 3001
 ```
 
-Danach im Browser öffnen:
+Create `.env.local`:
+
+```env
+# Local dev — uses an embedded SQLite file, no cloud account needed
+TURSO_DATABASE_URL=file:.data/local.db
+ADMIN_PASSWORD=your-admin-password
+
+# Retailer-specific market configuration
+EDEKA_MARKET_ID=10003350          # Find your EDEKA market ID on edeka.de
+DENNS_MARKET_SLUG=muenchen-regerstr  # Slug from biomarkt.de/<slug>/angebote
+```
 
 ```bash
-http://127.0.0.1:3001
+npm run dev
 ```
 
-Wichtig:
+Open [http://localhost:3000](http://localhost:3000).
 
-- Beim Öffnen von `/`, `/offers` und `/prospekte` wird kein automatischer Ingest gestartet
-- Ein manueller Ingest läuft nur über den Button `Daten aktualisieren` oder über die Refresh-API
+### Run an ingest
 
-## EDEKA Markt wechseln
-
-Der EDEKA-Adapter liest die Markt-ID aus `EDEKA_MARKET_ID`.
-
-Beispiel:
+The database starts empty. Click **"Daten aktualisieren"** in the header (uses the password from `ADMIN_PASSWORD`), or run:
 
 ```bash
-cp .env.example .env.local
+curl -X POST 'http://localhost:3000/api/refresh?week=current' \
+  -H 'Authorization: Bearer your-admin-password'
 ```
 
-Dann in `.env.local` setzen:
+For next week's data:
 
 ```bash
-EDEKA_MARKET_ID=17290
+curl -X POST 'http://localhost:3000/api/refresh?week=next' \
+  -H 'Authorization: Bearer your-admin-password'
 ```
 
-Danach den Next.js-Server neu starten.
+### Finding your market IDs
 
-## Ingest manuell ausführen
+**EDEKA** — navigate to your local EDEKA on [edeka.de](https://edeka.de), select a store, and extract the numeric ID from the URL (e.g. `10003350`).
 
-Aktuelle Woche:
+**Denns BioMarkt** — go to [biomarkt.de](https://www.biomarkt.de), select your store, and copy the slug from the URL (e.g. `muenchen-regerstr`).
+
+---
+
+## Deploying to Vercel
+
+### 1 — Create a Turso database
 
 ```bash
-curl -X POST 'http://127.0.0.1:3001/api/refresh?week=current'
+npm install -g @turso/cli
+turso auth login
+turso db create rabatthunter
 ```
 
-Nächste Woche:
+To seed with existing local data:
 
 ```bash
-curl -X POST 'http://127.0.0.1:3001/api/refresh?week=next'
+turso db create rabatthunter --from-file .data/local.db
 ```
 
-## Live-Datenstatus nach Händler
+Get the connection details:
 
-### Lidl
+```bash
+turso db show rabatthunter        # copy the libsql:// URL
+turso db tokens create rabatthunter
+```
 
-- Quelle für Prospekt-Übersicht: offizielle Lidl-Prospektseite
-- Quelle für Flyer-Details: offizieller viewer endpoint `https://endpoints.leaflets.schwarz/v4/flyer`
-- Bereits live:
-  - Prospekt-Metadaten
-  - Produktname
-  - Marke
-  - Preis
-  - Produktbild
-  - Produkt-URL
-  - current/next week Auswahl
-- Nicht mehr Teil des aktiven Scopes:
-  - Originalpreis
-  - Rabatt-Prozent
+### 2 — Set environment variables in Vercel
 
-Stand der letzten lokalen Verifikation vom `2026-03-12`:
+In your Vercel project → **Settings → Environment Variables**, add:
 
-- Lidl `current`: `150` offers, `150` mit Bild
-- Lidl `next`: `126` offers, `126` mit Bild
+| Variable | Value |
+|---|---|
+| `TURSO_DATABASE_URL` | `libsql://rabatthunter-<your-org>.turso.io` |
+| `TURSO_AUTH_TOKEN` | *(token from step 1)* |
+| `ADMIN_PASSWORD` | A strong password for the ingest button |
+| `EDEKA_MARKET_ID` | Your EDEKA market ID |
+| `DENNS_MARKET_SLUG` | Your Denns market slug |
 
-### ALDI
+### 3 — Deploy
 
-- Quelle für Prospekt-Übersicht: offizielle ALDI-Prospektseite `https://www.aldi-sued.de/prospekte`
-- Primäre Quelle für Angebotsdaten: offizieller ALDI-Publitas-Prospekt
-  - `https://prospekt.aldi-sued.de/<slug>/data.json`
-  - `https://prospekt.aldi-sued.de/<slug>/page/{n}/hotspots_data.json?version=...`
-- Fallback-Quelle: offizielle Angebotsseiten `https://www.aldi-sued.de/angebote/{date}`
-- Bereits live:
-  - Prospekt-Links für aktuelle und nächste Woche
-  - Angebotsname
-  - Marke
-  - Preis
-  - Produktbild
-  - Produkt-URL
-  - unitInfo aus offiziellen Prospekt-Produkt-Hotspots
-  - current/next week Auswahl
-- Technischer Ansatz:
-  - bevorzugt werden offizielle Prospekt-JSONs (`data.json` + `hotspots_data.json`)
-  - die alte HTML-Tile-Extraktion aus `/angebote/{date}` bleibt nur als Fallback erhalten
+```bash
+vercel --prod
+```
 
-Stand der letzten lokalen Verifikation vom `2026-03-13`:
+Or connect the GitHub repo in the Vercel dashboard for automatic deploys on push.
 
-- ALDI `current`: `183` offers, `183` mit Bild
-- ALDI `next`: `30` offers, `30` mit Bild
+> **Note:** Vercel functions are serverless — the filesystem is ephemeral. Turso is the only persistent store. All data survives deploys and cold starts.
 
-### NORMA
+---
 
-- Quelle für Angebotsdaten: offizielle NORMA-Angebotsseite `https://www.norma-online.de/de/angebote/`
-- Technischer Pfad:
-  - Datumseinstiege wie `ab Montag`, `ab Mittwoch`, `ab Freitag` aus der offiziellen Übersicht erkennen
-  - Themenwelt-Seiten der relevanten Woche laden
-  - Produktkarten direkt aus den offiziellen HTML-Themenseiten extrahieren
-- Bereits live:
-  - current/next week Auswahl
-  - Angebotsname
-  - Marke
-  - Preis und UVP, sofern vorhanden
-  - Produktbild
-  - Produkt-URL
-  - Themenwelt als `sourceSection`
+## Retailer Adapters
 
-Stand der letzten lokalen Verifikation vom `2026-03-13`:
+| Retailer | Data source | Current week | Next week |
+|---|---|---|---|
+| **ALDI Süd** | Publitas JSON prospekt + HTML fallback | ✓ | ✓ |
+| **Lidl** | `endpoints.leaflets.schwarz` v4 API | ✓ | ✓ |
+| **NORMA** | HTML scrape of `norma-online.de/angebote` | ✓ | ✓ |
+| **EDEKA** | Market JSP + `__NEXT_DATA__` + catalog XML | ✓ | ✓ (when available) |
+| **Denns BioMarkt** | Gatsby `page-data.json` | ✓ | ✓ |
 
-- NORMA `current`: `226` offers
+All adapters use plain `fetch` — no browser automation, no Puppeteer, no paid proxies.
 
-### EDEKA
+---
 
-- Quelle für Prospekt-Metadaten: offizielles `prospekt.jsp` inklusive `__NEXT_DATA__`
-- Quelle für offizielle Gültigkeit: `blaetterkatalog/xml/catalog.xml`
-- Quelle für aktuelle Angebotsdaten: offizielles `angebote.jsp`
-- Bereits live:
-  - Marktabhängige Prospekt-Metadaten
-  - Gültigkeit des aktuellen Flyers
-  - aktuelle Angebotskarten aus der serverseitig gerenderten Angebotsseite
-  - Produktname
-  - Preis
-  - Bild
-  - Kategorie / Beschreibung / Gültigkeitstext
-- `next` week:
-  - Erkennung ist implementiert
-  - funktioniert, sobald der gewählte Markt auf offiziellen EDEKA-Seiten bereits einen zukünftigen Flyer veröffentlicht
-  - Stand `2026-03-13`: in einer lokalen Stichprobe mehrerer offizieller Märkte wurde noch kein Markt mit vorab veröffentlichtem next-week-Flyer gefunden
+## Database Schema
 
-Stand der letzten lokalen Verifikation vom `2026-03-13`:
+```sql
+-- Ingest run metadata (one row per scrape job)
+ingest_runs (id, week_scope, started_at, completed_at, offer_count, status, detail)
 
-- EDEKA `current`: `202` offers, `202` mit Bild
+-- Retailer flyer metadata
+issues (id, retailer, week_scope, title, valid_from, valid_to, flyer_url, cover_url, ingest_run_id)
 
-### Denns BioMarkt
+-- Individual offer records
+offers (id, issue_id, retailer, week_scope, name, brand, price, original_price,
+        promo_label, image_url, product_url, description, valid_from, valid_to,
+        source_section, category, ingest_run_id)
 
-- Quelle für Angebotsdaten: offizielle Markt-Angebotsseite `https://www.biomarkt.de/<markt>/angebote`
-- Quelle für strukturierte Daten: offizielles Gatsby `page-data.json` der Angebotsseite
-- Bereits live:
-  - aktueller offizieller Markt-Feed der Angebotsseite
-  - current-Ansicht nahe an der realen offiziellen Angebotsseite
-  - next-Ansicht auf Basis offizieller Gültigkeitsfenster
-  - Angebotsname
-  - Marke
-  - Preis und App-Preis
-  - Streichpreis, wenn im offiziellen Feed vorhanden
-  - Promo-Karten wie `10% Rabatt` als Label-Karten
-  - Produktbild
-  - Gruppierung aus offiziellen Angebotsgruppen
-- Technischer Ansatz:
-  - kein Browser- oder Session-Handling
-  - JSON direkt aus der offiziellen Gatsby-`page-data`
-  - Prospekt-Link wird aus der offiziellen Angebotsseiten-Konfiguration abgeleitet
-  - App-only-Karten und Coupon-Karten werden nicht mehr stillschweigend weggefiltert
+-- Shopping cart (client-side session key)
+shopping_items (id, session_key, offer_id, quantity, checked, added_at)
 
-Stand der letzten lokalen Verifikation vom `2026-03-13`:
+-- App-level key-value flags (e.g. seed version)
+app_state (key, value)
+```
 
-- offizielles Denns `page-data`: `12` Karten für `muenchen-regerstr`
-- davon werden aktuelle Produkt- und Promo-Karten jetzt vollständig in die App übernommen
+---
 
-## Nächste sinnvolle Schritte
+## License
 
-1. Restliche `Sonstige`-Grenzfälle weiter reduzieren, vor allem bei Wohnen/Garten/Haushalt statt weiterer Lebensmittel-Fehlgriffe
-2. Für EDEKA einen Markt mit früh veröffentlichtem next-week-Flyer finden, um den live `next`-Pfad gegen echte Daten zu verifizieren
-3. Falls Denns später weitere Marktspezifika braucht, `DENNS_MARKET_SLUG` pro Deployment passend setzen
-4. Falls Denns später wieder näher an das vollständige Prospekt gebracht werden soll, einen zweiten Pfad für PDF/Viewer-Ergänzung zusätzlich zum offiziellen `page-data` bauen
-5. Optional: manuelle Kategorie-Korrekturen im Admin-UI ergänzen, statt jede Randklasse nur regelbasiert abzudecken
+MIT — feel free to fork, adapt, or use as a reference for your own portfolio projects.
 
-## Übergabe
+---
 
-Für den nächsten Agenten ist die wichtigste technische Übergabe in [HANDOFF.md](/Users/jiazheng/idol/claude_projects/supermarket_discount/HANDOFF.md) dokumentiert.
-
-## Architekturhinweis
-
-Die Adapter liegen unter `lib/ingest/adapters/`. Die Zielstruktur pro Adapter ist:
-
-1. Prospekt-URL oder Filialseite entdecken
-2. Strukturierte Viewer-Daten oder offizielle Seiten-JSONs abrufen
-3. Produkte, Bilder, Preise und Gültigkeit extrahieren
-4. In das standardisierte `issue + offers` Format überführen
-
-Die restliche UI, das SQLite-Schema und die APIs sind bereits auf diese Datenstruktur ausgelegt.
+*Built by [Jiazheng Tian](https://jiazheng.dev) · Next.js 15 · Turso · React 19*

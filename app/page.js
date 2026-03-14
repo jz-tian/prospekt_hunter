@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { OfferCard } from "@/components/offer-card";
+import { OffersFilter } from "@/components/offers-filter";
 import { SiteShell } from "@/components/site-shell";
 import { WeekScopeSwitcher } from "@/components/week-scope-switcher";
 import { RefreshDataButton } from "@/components/refresh-data-button";
-import { getDashboardData } from "@/lib/db";
+import { getDashboardData, listOffers, listCategories } from "@/lib/db";
+import { RETAILERS } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,11 @@ export const dynamic = "force-dynamic";
 export default async function HomePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const weekScope = resolvedSearchParams.week === "next" ? "next" : "current";
-  const { retailers, featuredOffers, categories } = getDashboardData(weekScope);
+  const [{ retailers }, categories, offers] = await Promise.all([
+    getDashboardData(weekScope),
+    listCategories(weekScope),
+    listOffers(resolvedSearchParams),
+  ]);
   const weekLabel = weekScope === "next" ? "Nächste Woche" : "Diese Woche";
 
   return (
@@ -24,72 +29,48 @@ export default async function HomePage({ searchParams }) {
         <div className="section-header section-header--centered">
           <div className="eyebrow">{weekLabel}</div>
           <h3>Marktstatus</h3>
-          <p>Aktuelle Prospekt-Woche und erkannte Angebote je Händler.</p>
         </div>
 
         <div className="retailer-grid">
-          {retailers.map((retailer) => (
-            <article className="card retailer-card" key={retailer.slug} style={{ "--retailer-color": retailer.color }}>
-              <div className="retailer-accent" />
-              <img src={`/logos/${retailer.slug}.svg`} alt={retailer.name} className="retailer-logo" />
-              <h4>{retailer.offerCount} aktive Angebote</h4>
-              <p className="muted">
-                {retailer.validFrom && retailer.validTo ? `Gültig ${formatDateRange(retailer.validFrom, retailer.validTo)}` : "Noch kein Prospekt"}
-              </p>
-              <p className="muted">{retailer.prospektCount} Prospekt erfasst</p>
-            </article>
-          ))}
+          {retailers.map((retailer) => {
+            const originalHref =
+              (retailer.sourceType === "live-lidl-api" || retailer.sourceType === "live-denns-page-data") && retailer.assetPath
+                ? retailer.assetPath
+                : retailer.sourceUrl;
+            return (
+              <article className="card retailer-card" key={retailer.slug} style={{ "--retailer-color": retailer.color }}>
+                <div className="retailer-accent" />
+                <img src={`/logos/${retailer.slug}.svg`} alt={retailer.name} className="retailer-logo" />
+                <h4><span className="offer-count-num">{retailer.offerCount}</span><span className="offer-count-label">aktive Angebote</span></h4>
+                <p className="muted">
+                  {retailer.validFrom && retailer.validTo ? `Gültig ${formatDateRange(retailer.validFrom, retailer.validTo)}` : "Noch kein Prospekt"}
+                </p>
+                {originalHref ? (
+                  <a href={originalHref} className="retailer-original-link" target="_blank" rel="noreferrer">
+                    Prospekt ansehen ↗
+                  </a>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <h3>Alle Produkte</h3>
-            <p>Feinere Kategorien für bessere Orientierung zwischen Vorrat, Getränken, Snacks, Haushalt und Frische.</p>
-          </div>
-          <Link href={`/offers?week=${weekScope}`} className="ghost-button">
-            Zur Angebotsliste
-          </Link>
+      <section className="section section--separated" id="angebote">
+        <div className="section-header section-header--centered">
+          <div className="eyebrow">{offers.length} Produkte</div>
+          <h3>Alle Angebote</h3>
         </div>
 
-        <div className="category-grid">
-          {categories.map((category) => (
-            <Link
-              href={`/offers?week=${weekScope}&category=${category.slug}`}
-              className="category-card"
-              key={category.slug}
-              style={{ background: category.tone, color: category.textColor }}
-            >
-              <div className="category-icon">{category.emoji ?? "🛒"}</div>
-              <div>
-                <h4>{category.name}</h4>
-                <p>{category.offerCount} Angebote</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <h3>Preiswerte Funde</h3>
-            <p>Eine Auswahl aktueller Prospekt-Angebote aus den laufenden Wochenaktionen.</p>
-          </div>
-        </div>
+        <OffersFilter retailers={RETAILERS} categories={categories} searchParams={resolvedSearchParams} />
 
         <div className="offers-grid">
-          {featuredOffers.map((offer) => (
+          {offers.map((offer) => (
             <OfferCard key={offer.id} offer={offer} />
           ))}
         </div>
       </section>
 
-      <p className="footer-note">
-        Daten werden aus der lokalen Datenbank gelesen. Mit "Daten aktualisieren" startest du einen manuellen Ingest gegen die
-        offiziellen Quellen aller fünf Händler. Denns läuft dabei direkt über die offizielle Angebotsseite mit strukturierter page-data.
-      </p>
     </SiteShell>
   );
 }

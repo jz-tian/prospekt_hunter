@@ -7,31 +7,14 @@ import { formatDateRange } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-function describeSourceType(sourceType) {
-  if (sourceType === "fixture") {
-    return {
-      label: "Beispieldaten",
-      detail: "Aktuell keine live geladenen Originaldaten in dieser Umgebung."
-    };
-  }
-
-  if (sourceType.startsWith("live-")) {
-    return {
-      label: "Live-Daten",
-      detail: "Direkt aus offiziellen Händlerquellen geladen."
-    };
-  }
-
-  return {
-    label: sourceType,
-    detail: "Quelle nicht weiter klassifiziert."
-  };
+function isCoverImage(assetPath) {
+  return assetPath && /\.(jpe?g|png|webp|avif|gif)(\?|$)/i.test(assetPath);
 }
 
 export default async function ProspektePage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const weekScope = resolvedSearchParams.week === "next" ? "next" : "current";
-  const prospekte = listProspekte(weekScope);
+  const prospekte = await listProspekte(weekScope);
 
   return (
     <SiteShell>
@@ -49,38 +32,37 @@ export default async function ProspektePage({ searchParams }) {
 
         <div className="prospekt-grid">
           {prospekte.map((prospekt) => (
-            <article className="card prospekt-card" key={prospekt.id}>
-              {(() => {
-                const source = describeSourceType(prospekt.sourceType);
-                return (
-                  <>
-              <div className="retailer-accent" style={{ background: prospekt.retailerColor }} />
-              <span className="retailer-pill">{prospekt.retailerName}</span>
-              <h4>{prospekt.title}</h4>
-              <p className="muted">Gültig {formatDateRange(prospekt.validFrom, prospekt.validTo)}</p>
-              <p className="muted">{prospekt.offerCount} Angebote erkannt</p>
-              <p className="muted">Datenstatus: {source.label}</p>
-              <p className="muted">{source.detail}</p>
-              <div className="hero-actions">
-                <a
-                  href={
-                    (prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data") && prospekt.assetPath
-                      ? prospekt.assetPath
-                      : prospekt.sourceUrl
-                  }
-                  className="ghost-button"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data" ? "PDF öffnen" : "Original ansehen"}
-                </a>
-                <Link href={`/offers?week=${weekScope}&retailer=${prospekt.retailerSlug}`} className="cta">
-                  Angebote
-                </Link>
+            <article className="card prospekt-card" key={prospekt.id} style={{ "--retailer-color": prospekt.retailerColor }}>
+              <div className="retailer-accent" />
+              {isCoverImage(prospekt.assetPath) ? (
+                <img src={prospekt.assetPath} alt={prospekt.title} className="prospekt-cover-img" />
+              ) : (
+                <div className="prospekt-cover-placeholder">
+                  <img src={`/logos/${prospekt.retailerSlug}.svg`} alt={prospekt.retailerName} className="prospekt-cover-logo" />
+                </div>
+              )}
+              <div className="prospekt-card-body">
+                <img src={`/logos/${prospekt.retailerSlug}.svg`} alt={prospekt.retailerName} className="retailer-logo" />
+                <h4>{prospekt.title}</h4>
+                <p className="muted">Gültig {formatDateRange(prospekt.validFrom, prospekt.validTo)}</p>
+                <div className="hero-actions">
+                  <a
+                    href={
+                      (prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data") && prospekt.assetPath
+                        ? prospekt.assetPath
+                        : prospekt.sourceUrl
+                    }
+                    className="ghost-button"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data" ? "PDF öffnen" : "Original ansehen"}
+                  </a>
+                  <Link href={`/offers?week=${weekScope}&retailer=${prospekt.retailerSlug}`} className="cta">
+                    Angebote
+                  </Link>
+                </div>
               </div>
-                  </>
-                );
-              })()}
             </article>
           ))}
         </div>

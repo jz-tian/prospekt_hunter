@@ -4,5 +4,5 @@ import { listProspekte } from "@/lib/db";
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const weekScope = searchParams.get("week") === "next" ? "next" : "current";
-  return NextResponse.json({ prospekte: listProspekte(weekScope) });
+  return NextResponse.json({ prospekte: await listProspekte(weekScope) });
 }

@@ -1,19 +1,36 @@
-import { Inter } from "next/font/google";
+import { DM_Sans, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-// Use `variable` (not `className`) so the font is exposed as a CSS custom property
-// --font-inter, which globals.css references via var(--font-inter).
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  weight: ["400", "500", "600", "700", "800"]
+});
 
 export const metadata = {
-  title: "RabattHunter",
-  description: "Wöchentliche Prospekt-Angebote von ALDI, Lidl, Denns BioMarkt, NORMA und EDEKA — kategorisiert, gefiltert, auf einen Blick."
+  title: "RabattHunter · by Jiazheng Tian",
+  description: "Live weekly supermarket deals from ALDI, Lidl, Denns, NORMA and EDEKA — scraped, categorised and filterable. A full-stack portfolio project built with Next.js 15, Turso and live retail APIs.",
+  authors: [{ name: "Jiazheng Tian" }],
+  keywords: ["supermarket", "discounts", "ALDI", "Lidl", "EDEKA", "Next.js", "portfolio"],
+  openGraph: {
+    title: "RabattHunter · by Jiazheng Tian",
+    description: "Live German supermarket discount tracker — Next.js 15, Turso, React 19.",
+    type: "website",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#1a5c35",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="de" className={inter.variable} suppressHydrationWarning>
-      <body>{children}</body>
+    <html lang="de" className={`${dmSans.variable} ${bricolage.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
