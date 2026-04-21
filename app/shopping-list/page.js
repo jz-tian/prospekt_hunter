@@ -4,21 +4,28 @@ import { listShoppingItems } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function ShoppingListPage() {
-  const items = JSON.parse(JSON.stringify(listShoppingItems()));
+export default async function ShoppingListPage() {
+  const items = JSON.parse(JSON.stringify(await listShoppingItems()));
 
   return (
     <SiteShell>
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <h3>Einkaufsliste</h3>
-            <p>Merkliste statt Checkout. Angebote aus allen Märkten lassen sich gesammelt planen.</p>
+      <div className="page-hero" style={{ marginBottom: 0 }}>
+        <div className="lead">
+          <h1>
+            <span className="jp">買 物 帳 · EINKAUFSLISTE</span>
+            Mein Korb
+          </h1>
+          <p>Sortiert nach Händler — wie ein Quittungs-Block aus dem Tante-Emma-Laden.</p>
+        </div>
+        <div className="stats">
+          <div className="stat">
+            <div className="n">{items.length}</div>
+            <div className="l">Positionen</div>
           </div>
         </div>
+      </div>
 
-        <ShoppingListClient initialItems={items} />
-      </section>
+      <ShoppingListClient initialItems={items} />
     </SiteShell>
   );
 }

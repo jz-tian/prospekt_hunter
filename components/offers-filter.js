@@ -1,53 +1,63 @@
 export function OffersFilter({ retailers, categories, searchParams }) {
   return (
-    <div className="filters">
-      <form className="filter-form">
-        <input type="hidden" name="week" value={searchParams.week ?? "current"} />
+    <form className="filter-board" method="get">
+      <input type="hidden" name="week" value={searchParams.week ?? "current"} />
 
-        <div className="filter-search-wrap">
-          <svg className="filter-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
+      <div>
+        <label htmlFor="filter-search">Suche · 検索</label>
+        <div className="search-wrap">
           <input
-            className="search-input-field"
+            id="filter-search"
+            className="input"
             type="search"
             name="search"
-            placeholder="Produkte oder Marken suchen…"
+            placeholder="z. B. Butter, Kaffee, Hack…"
             defaultValue={searchParams.search ?? ""}
           />
-        </div>
-
-        <div className="filter-selects">
-          <select className="filter-select" name="retailer" defaultValue={searchParams.retailer ?? ""}>
-            <option value="">Alle Märkte</option>
-            {retailers.map((retailer) => (
-              <option key={retailer.slug} value={retailer.slug}>
-                {retailer.name}
-              </option>
-            ))}
-          </select>
-          <select className="filter-select" name="category" defaultValue={searchParams.category ?? ""}>
-            <option value="">Alle Kategorien</option>
-            {categories.map((category) => (
-              <option key={category.slug} value={category.slug}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <select className="filter-select" name="sort" defaultValue={searchParams.sort ?? ""}>
-            <option value="">Sortierung</option>
-            <option value="price_asc">Preis ↑</option>
-            <option value="price_desc">Preis ↓</option>
-            <option value="name">Name A–Z</option>
-          </select>
-          <button className="filter-submit-btn" type="submit">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          <span className="glass" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--red)" strokeWidth="2" strokeLinecap="round">
+              <circle cx="6.5" cy="6.5" r="4" />
+              <line x1="9.7" y1="9.7" x2="13.5" y2="13.5" />
+              <line x1="4.5" y1="6.5" x2="8.5" y2="6.5" />
+              <line x1="6.5" y1="4.5" x2="6.5" y2="8.5" />
             </svg>
-            Filtern
-          </button>
+          </span>
         </div>
-      </form>
-    </div>
+      </div>
+
+      <div>
+        <label htmlFor="filter-retailer">Händler · 店</label>
+        <select id="filter-retailer" name="retailer" defaultValue={searchParams.retailer ?? ""}>
+          <option value="">Alle Händler</option>
+          {retailers.map((retailer) => (
+            <option key={retailer.slug} value={retailer.slug}>{retailer.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="filter-category">Kategorie · 分類</label>
+        <select id="filter-category" name="category" defaultValue={searchParams.category ?? ""}>
+          <option value="">Alle Kategorien</option>
+          {categories.map((category) => (
+            <option key={category.slug} value={category.slug}>{category.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="filter-sort">Sortierung · 並</label>
+        <select id="filter-sort" name="sort" defaultValue={searchParams.sort ?? ""}>
+          <option value="">Standard</option>
+          <option value="price_asc">Preis ↑</option>
+          <option value="price_desc">Preis ↓</option>
+          <option value="name">Name A–Z</option>
+        </select>
+      </div>
+
+      <button className="filter-btn" type="submit">
+        FILTERN 絞
+      </button>
+    </form>
   );
 }

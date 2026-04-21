@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RefreshDataButton } from "@/components/refresh-data-button";
+import { Signboard } from "@/components/signboard";
 import { SiteShell } from "@/components/site-shell";
 import { WeekScopeSwitcher } from "@/components/week-scope-switcher";
 import { listProspekte } from "@/lib/db";
@@ -18,60 +19,71 @@ export default async function ProspektePage({ searchParams }) {
 
   return (
     <SiteShell>
-      <section className="section">
-        <div className="toolbar">
-          <WeekScopeSwitcher weekScope={weekScope} href="/prospekte" />
-          <RefreshDataButton weekScope={weekScope} />
+      <div className="page-hero">
+        <div className="lead">
+          <h1>
+            <span className="jp">広 告 集 · PROSPEKTE</span>
+            Wochenprospekte
+          </h1>
+          <p>Die gesammelten Handzettel der Woche — wie der alte Prospekt-Stapel im Briefkasten, nur ohne Papier.</p>
         </div>
-        <div className="section-header">
-          <div>
-            <h3>Prospekte</h3>
-            <p>Wochenhefte je Händler mit Gültigkeit, Quelle und Anzahl der erkannten Angebote.</p>
+        <div className="stats">
+          <div className="stat">
+            <div className="n">{prospekte.length}</div>
+            <div className="l">Hefte</div>
           </div>
         </div>
+      </div>
 
-        <div className="prospekt-grid">
-          {prospekte.map((prospekt) => (
-            <article className="card prospekt-card" key={prospekt.id} style={{ "--retailer-color": prospekt.retailerColor }}>
-              <div className="retailer-accent" />
-              {isCoverImage(prospekt.assetPath) ? (
-                <img src={prospekt.assetPath} alt={prospekt.title} className="prospekt-cover-img" />
-              ) : (
-                <div className="prospekt-cover-placeholder">
-                  <img src={`/logos/${prospekt.retailerSlug}.svg`} alt={prospekt.retailerName} className="prospekt-cover-logo" />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "14px 0 0", flexWrap: "wrap", gap: 12 }}>
+        <WeekScopeSwitcher weekScope={weekScope} href="/prospekte" />
+        <RefreshDataButton weekScope={weekScope} />
+      </div>
+
+      <Signboard jp="今 週 の 広 告" title="Aktuelle Prospekte" sub="Klicken Sie auf ein Heft, um die Angebote zu öffnen" />
+
+      {prospekte.length === 0 ? (
+        <div className="empty-state">
+          <p>Für diese Woche ist noch kein Prospekt veröffentlicht.</p>
+        </div>
+      ) : (
+        <div className="prospekt-grid stagger">
+          {prospekte.map((prospekt) => {
+            const pdfHref =
+              (prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data") && prospekt.assetPath
+                ? prospekt.assetPath
+                : prospekt.sourceUrl;
+
+            return (
+              <div key={prospekt.id} className="prospekt">
+                <span className="c3" /><span className="c4" />
+                <div className="cover">
+                  {isCoverImage(prospekt.assetPath) ? (
+                    <img src={prospekt.assetPath} alt={prospekt.title} />
+                  ) : (
+                    <div className="cover-label">
+                      <span className="w">{prospekt.retailerName}</span>
+                      <span className="s">広告</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="prospekt-card-body">
-                <img src={`/logos/${prospekt.retailerSlug}.svg`} alt={prospekt.retailerName} className="retailer-logo" />
-                <h4>{prospekt.title}</h4>
-                <p className="muted">Gültig {formatDateRange(prospekt.validFrom, prospekt.validTo)}</p>
-                <div className="hero-actions">
-                  <a
-                    href={
-                      (prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data") && prospekt.assetPath
-                        ? prospekt.assetPath
-                        : prospekt.sourceUrl
-                    }
-                    className="ghost-button"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data" ? "PDF öffnen" : "Original ansehen"}
-                  </a>
-                  <Link href={`/offers?week=${weekScope}&retailer=${prospekt.retailerSlug}`} className="cta">
-                    Angebote
+                <h3>{prospekt.title}</h3>
+                <div className="meta">Gültig {formatDateRange(prospekt.validFrom, prospekt.validTo)}</div>
+                <div className="prospekt-actions">
+                  {pdfHref && (
+                    <a className="view-btn" href={pdfHref} target="_blank" rel="noreferrer">
+                      {prospekt.sourceType === "live-lidl-api" || prospekt.sourceType === "live-denns-page-data" ? "PDF →" : "Original →"}
+                    </a>
+                  )}
+                  <Link className="view-btn" href={`/offers?week=${weekScope}&retailer=${prospekt.retailerSlug}`}>
+                    Angebote →
                   </Link>
                 </div>
               </div>
-            </article>
-          ))}
+            );
+          })}
         </div>
-        {prospekte.length === 0 ? (
-          <div className="card empty-state">
-            <h3>Für diese Woche ist noch kein Prospekt veröffentlicht.</h3>
-          </div>
-        ) : null}
-      </section>
+      )}
     </SiteShell>
   );
 }

@@ -1,6 +1,6 @@
 import { AddToListButton } from "@/components/add-to-list-button";
 import { formatDateRange, formatEuro } from "@/lib/format";
-import { RETAILERS } from "@/lib/constants";
+import { RETAILERS, CATEGORY_DEFINITIONS } from "@/lib/constants";
 
 export function OfferCard({ offer }) {
   const displayPrice = offer.priceLabel || formatEuro(offer.salePrice);
@@ -11,37 +11,51 @@ export function OfferCard({ offer }) {
       ? Math.round((1 - offer.salePrice / offer.originalPrice) * 100)
       : null;
 
-  const retailerColor = RETAILERS.find((r) => r.slug === offer.retailerSlug)?.color ?? "#2a6b3c";
+  const categoryDef = CATEGORY_DEFINITIONS.find((c) => c.slug === offer.categorySlug);
+  const categoryLabel = categoryDef ? `${categoryDef.emoji} ${categoryDef.name}` : "";
 
   return (
-    <article className="card offer-card" style={{ "--retailer-color": retailerColor }}>
-      <div className="offer-image-wrap">
+    <article className="offer">
+      {discountPercent !== null && discountPercent > 0 && (
+        <div className="discount-stamp" aria-label={`Rabatt ${discountPercent} Prozent`}>
+          <div>
+            −{discountPercent}%
+            <small>SPAR</small>
+          </div>
+        </div>
+      )}
+
+      <div className="image-frame">
         {offer.imageUrl ? (
-          <img className="offer-image" src={offer.imageUrl} alt={offer.productName} loading="lazy" />
+          <img src={offer.imageUrl} alt={offer.productName} loading="lazy" />
         ) : (
-          <div className="offer-image-placeholder" aria-hidden="true" />
+          <div className="ph">
+            <span>{offer.productName.split(" ")[0].toUpperCase()}<br />商品写真</span>
+          </div>
         )}
-        {discountPercent !== null && (
-          <span className="discount-badge">−{discountPercent}%</span>
-        )}
+        <div className="retailer-tape">
+          <span>{offer.retailerName}</span>
+          {categoryLabel && <span className="cat">{categoryLabel}</span>}
+        </div>
       </div>
 
-      <div className="offer-body">
-        <span className="retailer-pill">{offer.retailerName}</span>
-        <h4 className="offer-title">{offer.productName}</h4>
-        <p className="offer-meta">{offer.brand ? `${offer.brand} · ` : ""}{offer.unitInfo || "Aktionsartikel"}</p>
+      <div className="title">{offer.productName}</div>
+      <div className="unit">
+        {offer.brand ? `${offer.brand}` : ""}
+        {offer.brand && offer.unitInfo ? " · " : ""}
+        {offer.unitInfo || "Aktionsartikel"}
+      </div>
 
-        <div className="price-row">
-          <span className="sale-price">{displayPrice}</span>
-          {offer.originalPrice ? (
-            <span className="original-price">{formatEuro(offer.originalPrice)}</span>
-          ) : null}
-        </div>
+      <div className="price-row">
+        <span className="now">{displayPrice}</span>
+        {offer.originalPrice ? (
+          <span className="was">statt {formatEuro(offer.originalPrice)}</span>
+        ) : null}
+      </div>
 
-        <div className="offer-footer">
-          <span className="muted offer-date">Gültig {formatDateRange(offer.validFrom, offer.validTo)}</span>
-          {canAddToList ? <AddToListButton offerId={offer.id} /> : null}
-        </div>
+      <div className="bottom">
+        <span className="offer-date">gültig {formatDateRange(offer.validFrom, offer.validTo)}</span>
+        {canAddToList ? <AddToListButton offerId={offer.id} /> : null}
       </div>
     </article>
   );

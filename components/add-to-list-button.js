@@ -2,28 +2,11 @@
 
 import { useState, useTransition } from "react";
 
-const IconPlus = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-    <path d="M12 5v14M5 12h14"/>
-  </svg>
-);
-
-const IconCheck = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M20 6 9 17l-5-5"/>
-  </svg>
-);
-
-const IconSpinner = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true" style={{ animation: "spin 600ms linear infinite" }}>
-    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-  </svg>
-);
-
 export function AddToListButton({ offerId }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
   const [error, setError] = useState(false);
+  const [flash, setFlash] = useState(false);
 
   function handleClick() {
     if (done) return;
@@ -36,6 +19,8 @@ export function AddToListButton({ offerId }) {
 
       if (response.ok) {
         setDone(true);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 520);
         window.dispatchEvent(new CustomEvent("shopping-list-updated"));
       } else {
         setError(true);
@@ -52,13 +37,17 @@ export function AddToListButton({ offerId }) {
   return (
     <button
       type="button"
-      className={`add-to-list-btn${done ? " done" : ""}${error ? " error" : ""}`}
+      className={`add-stamp${done ? " added" : ""}${error ? " error" : ""}${flash ? " flash" : ""}`}
       onClick={handleClick}
       disabled={pending || done}
       aria-label={label}
       title={label}
     >
-      {pending ? <IconSpinner /> : done ? <IconCheck /> : <IconPlus />}
+      {pending ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true" style={{ animation: "spin 600ms linear infinite" }}>
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
+      ) : done ? "✓" : "＋"}
     </button>
   );
 }

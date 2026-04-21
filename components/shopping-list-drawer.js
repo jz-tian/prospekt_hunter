@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatEuro } from "@/lib/format";
+import { RETAILERS } from "@/lib/constants";
 
 async function fetchList() {
   const response = await fetch("/api/shopping-list", { cache: "no-store" });
@@ -49,6 +50,17 @@ function downloadFile(filename, content, mimeType) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function EmptyBasket({ size = 64 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="#8B7355" strokeWidth="1.5" aria-hidden="true">
+      <path d="M10 35 L90 35 L82 85 L18 85 Z"/>
+      <path d="M10 35 L25 15 L40 35 M90 35 L75 15 L60 35"/>
+      <path d="M22 50 L78 50 M22 65 L78 65" strokeDasharray="2 3"/>
+      <path d="M30 35 V85 M50 35 V85 M70 35 V85" strokeDasharray="2 3"/>
+    </svg>
+  );
 }
 
 export function ShoppingListDrawer() {
@@ -120,7 +132,7 @@ export function ShoppingListDrawer() {
   async function copyText() {
     try {
       await navigator.clipboard.writeText(buildPlainText(summaries, total));
-      flash("Kopiert");
+      flash("Kopiert ✓");
     } catch {
       flash("Fehler");
     }
@@ -152,132 +164,112 @@ export function ShoppingListDrawer() {
         item.checked ? "ja" : "nein"
       ])
     ];
-    // UTF-8 BOM so Excel on Windows opens German characters correctly
-    const bom = "\uFEFF";
+    const bom = "﻿";
     const content = bom + rows.map((row) => row.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(",")).join("\n");
     downloadFile("einkaufsliste.csv", content, "text/csv;charset=utf-8");
     flash("CSV gespeichert");
   }
 
   return (
-    <aside
-      id="shopping-list-drawer"
-      className={`shopping-drawer ${open ? "open" : ""}`}
-      aria-hidden={!open}
-      onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
-    >
-      <div className="shopping-drawer-panel">
-        <div className="shopping-drawer-header">
-          <div className="shopping-drawer-title">
-            <span className="shopping-drawer-count-badge">{count}</span>
-            <h3>Einkaufsliste</h3>
+    <>
+      <div className={`drawer-backdrop${open ? " on" : ""}`} onClick={() => setOpen(false)} />
+      <aside className={`drawer${open ? " on" : ""}`} aria-hidden={!open} aria-label="Einkaufsliste">
+        <div className="drawer-head">
+          <div className="t">
+            <span className="sub">買 物 籠</span>
+            Einkaufsliste
           </div>
-          <button type="button" className="drawer-close-btn" onClick={() => setOpen(false)} aria-label="Schließen">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12"/>
-            </svg>
-          </button>
+          <button className="close" onClick={() => setOpen(false)} aria-label="Schließen">✕</button>
         </div>
 
-        <div className="shopping-drawer-body">
+        <div className="drawer-body">
           {items.length === 0 ? (
-            <div className="drawer-empty">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3" aria-hidden="true">
-                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-              </svg>
-              <p>Noch nichts drin</p>
+            <div className="empty-drawer">
+              <EmptyBasket size={80} />
+              <p>Ihr Korb ist leer.<br />Stöbern Sie durch den Markt und sammeln Sie Ihre Funde.</p>
             </div>
-          ) : (
-            summaries.map((summary) => (
-              <section className="shopping-drawer-group" key={summary.retailerName} style={{ "--retailer-color": summary.retailerColor }}>
-                <div className="shopping-drawer-group-header">
-                  <div className="shopping-drawer-group-meta">
-                    <img src={`/logos/${summary.retailerSlug}.svg`} alt={summary.retailerName} className="drawer-retailer-logo" />
-                    <span className="muted">{formatEuro(summary.total)}</span>
+          ) : summaries.map((g) => {
+            const retailer = RETAILERS.find((r) => r.slug === g.retailerSlug);
+            const colorClass = retailer?.colorClass ?? "";
+            return (
+              <div key={g.retailerName}>
+                <div className={`group-head ${colorClass}`}>
+                  <span>{g.retailerName}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, fontWeight: 400 }}>
+                      {g.items.length} Pos.
+                    </span>
+                    <button
+                      className="clear-btn"
+                      onClick={() => clearItems(g.retailerSlug)}
+                      disabled={busy}
+                    >
+                      Leeren
+                    </button>
                   </div>
-                  <button type="button" className="drawer-text-btn" onClick={() => clearItems(summary.retailerSlug)} disabled={busy}>
-                    Leeren
-                  </button>
                 </div>
-
-                {summary.items.map((item) => (
-                  <div className={`shopping-drawer-item ${item.checked ? "done" : ""}`} key={item.id}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(item.checked)}
-                      onChange={(e) => mutateItem(item.id, { checked: e.target.checked ? 1 : 0 })}
+                {g.items.map((item) => (
+                  <div key={item.id} className="list-row">
+                    <span
+                      className={`check${item.checked ? " on" : ""}`}
+                      onClick={() => mutateItem(item.id, { checked: item.checked ? 0 : 1 })}
+                      role="checkbox"
+                      aria-checked={Boolean(item.checked)}
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === " " && mutateItem(item.id, { checked: item.checked ? 0 : 1 })}
                     />
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt="" className="drawer-item-img" aria-hidden="true" />
-                    ) : (
-                      <div className="drawer-item-img-placeholder" style={{ "--retailer-color": summary.retailerColor }} />
-                    )}
-                    <div className="shopping-drawer-copy">
-                      <div className="shopping-name">{item.productName}</div>
-                      <div className="shopping-price">{formatEuro(item.salePrice)} · {item.quantity}×</div>
+                    <span className={`name${item.checked ? " done" : ""}`}>
+                      {item.productName}
+                      <small>{item.unitInfo || ""}</small>
+                    </span>
+                    <div className="qty-ctrl">
+                      <button className="qty-btn" onClick={() => mutateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })} disabled={busy} aria-label="Weniger">−</button>
+                      <span className="qty-val">{item.quantity}</span>
+                      <button className="qty-btn" onClick={() => mutateItem(item.id, { quantity: item.quantity + 1 })} disabled={busy} aria-label="Mehr">+</button>
                     </div>
-                    <div className="shopping-drawer-item-actions">
-                      <button className="drawer-qty-btn" type="button" onClick={() => mutateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })} disabled={busy} aria-label="Menge verringern">−</button>
-                      <button className="drawer-qty-btn" type="button" onClick={() => mutateItem(item.id, { quantity: item.quantity + 1 })} disabled={busy} aria-label="Menge erhöhen">+</button>
-                      <button className="drawer-remove-btn" type="button" onClick={() => removeItem(item.id)} disabled={busy} aria-label="Entfernen">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                          <path d="M18 6 6 18M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </div>
+                    <span className="price">{formatEuro(item.salePrice * item.quantity)}</span>
+                    <button className="rm" onClick={() => removeItem(item.id)} disabled={busy} aria-label="Entfernen">✕</button>
                   </div>
                 ))}
-              </section>
-            ))
-          )}
+              </div>
+            );
+          })}
         </div>
 
         {items.length > 0 && (
-          <div className="shopping-drawer-footer">
-            <div className="shopping-drawer-total">
-              <span>Gesamt</span>
-              <strong>{formatEuro(total)}</strong>
+          <div className="drawer-foot">
+            <div className="total-row">
+              <span className="label">TOTAL 合計</span>
+              <span className="sum">{formatEuro(total)}</span>
             </div>
-            <div className="drawer-export-panel">
-              <div className="drawer-export-label">Exportieren</div>
-              <div className="drawer-export-actions">
-                {canShare ? (
-                  <button type="button" className="drawer-export-btn" onClick={shareText}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-                    </svg>
-                    Teilen
-                  </button>
-                ) : (
-                  <button type="button" className="drawer-export-btn" onClick={copyText}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                    </svg>
-                    Kopieren
-                  </button>
-                )}
-                <button type="button" className="drawer-export-btn" onClick={downloadTxt}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
-                  </svg>
-                  TXT
+            <div className="export-row">
+              {canShare ? (
+                <button className="stamp-btn" onClick={shareText}>
+                  <span className="jp">共有</span>Teilen
                 </button>
-                <button type="button" className="drawer-export-btn" onClick={downloadCsv}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="8" y2="17"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="16" y1="13" x2="16" y2="17"/>
-                  </svg>
-                  CSV
+              ) : (
+                <button className="stamp-btn" onClick={copyText}>
+                  <span className="jp">複写</span>Kopieren
                 </button>
+              )}
+              <button className="stamp-btn" onClick={downloadTxt}>
+                <span className="jp">出力</span>TXT
+              </button>
+              <button className="stamp-btn" onClick={downloadCsv}>
+                <span className="jp">出力</span>CSV
+              </button>
+              <button className="stamp-btn" onClick={() => clearItems()} disabled={busy} style={{ color: "var(--red)" }}>
+                <span className="jp">削除</span>Leeren
+              </button>
+            </div>
+            {exportStatus && (
+              <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "var(--sage)", marginTop: 8, letterSpacing: "0.1em" }}>
+                {exportStatus}
               </div>
-              {exportStatus && <div className="drawer-export-status">{exportStatus}</div>}
-            </div>
-            <button type="button" className="ghost-button" style={{ width: "100%" }} onClick={() => clearItems()} disabled={busy}>
-              Alles leeren
-            </button>
+            )}
           </div>
         )}
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

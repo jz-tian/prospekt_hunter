@@ -1,12 +1,4 @@
-import { DM_Sans, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
-
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-bricolage",
-  weight: ["400", "500", "600", "700", "800"]
-});
 
 export const metadata = {
   title: "RabattHunter · by Jiazheng Tian",
@@ -24,12 +16,20 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#1a5c35",
+  themeColor: "#7A1A28",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="de" className={`${dmSans.variable} ${bricolage.variable}`} suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Playfair+Display:ital,wght@1,900&family=JetBrains+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

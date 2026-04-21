@@ -79,16 +79,22 @@ export function RefreshDataButton({ weekScope = "current" }) {
             className="admin-key-input"
             autoComplete="off"
           />
-          <button type="submit" className="ghost-button">OK</button>
-          <button type="button" className="ghost-button" onClick={handleCancel}>Abbrechen</button>
+          <button type="submit" className="admin-btn">OK</button>
+          <button type="button" className="admin-btn" onClick={handleCancel} style={{ background: "var(--surface)", color: "var(--text)" }}>
+            Abbrechen
+          </button>
         </form>
       ) : (
         <button
           type="button"
-          className="ghost-button refresh-button"
+          className="refresh-btn"
           onClick={handleClick}
           disabled={phase === "busy" || isPending}
         >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path d="M14 8a6 6 0 1 1-1.8-4.3"/>
+            <path d="M14 2v4h-4"/>
+          </svg>
           {phase === "busy" || isPending ? "Aktualisiere…" : "Daten aktualisieren"}
         </button>
       )}
