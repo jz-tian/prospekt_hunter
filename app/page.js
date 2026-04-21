@@ -80,10 +80,8 @@ export default async function HomePage({ searchParams }) {
       </div>
 
       {/* Offers section */}
-      <div className="admin-bar">
-        <div className="left">
-          <Signboard jp="本 日 の 目 玉" title="Aktuelle Angebote" sub={`${offers.length} Angebote diese Woche`} />
-        </div>
+      <Signboard jp="本 日 の 目 玉" title="Aktuelle Angebote" sub={`${offers.length} Angebote diese Woche`} />
+      <div style={{ display: "flex", justifyContent: "flex-end", margin: "-8px 0 6px" }}>
         <RefreshDataButton weekScope={weekScope} />
       </div>
 

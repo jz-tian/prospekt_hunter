@@ -102,6 +102,7 @@ body {
   color: var(--bg);
   border-bottom: 4px solid var(--border);
   position: relative;
+  z-index: 20;
   background-image:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><g fill='none' stroke='%23F5EDD6' stroke-width='0.6' opacity='0.16'><path d='M30 0 L60 17 L60 35 L30 52 L0 35 L0 17 Z'/><path d='M30 0 L30 52 M0 17 L60 35 M60 17 L0 35'/></g></svg>"),
     linear-gradient(180deg, var(--red-deep) 0%, var(--red) 100%);
@@ -246,7 +247,7 @@ body {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin: 32px 0 20px;
+  margin: 32px 0 48px;
 }
 .signboard .rule {
   flex: 1;
@@ -351,6 +352,7 @@ body {
   grid-template-columns: repeat(5, 1fr);
   gap: 14px;
   margin-top: 6px;
+  margin-bottom: 48px;
 }
 .stall {
   border: 2px solid var(--border);

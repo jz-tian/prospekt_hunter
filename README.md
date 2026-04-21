@@ -6,6 +6,8 @@ Aggregates weekly deals from five major German supermarkets (ALDI, Lidl, NORMA, 
 
 **Live demo:** [rabatthunter.vercel.app](https://rabatthunter.vercel.app) · **Portfolio:** [jz-tian.github.io](https://jz-tian.github.io)
 
+![RabattHunter demo](demo.gif)
+
 ---
 
 ## Features
@@ -35,7 +37,7 @@ Aggregates weekly deals from five major German supermarkets (ALDI, Lidl, NORMA, 
 | Database | [Turso](https://turso.tech) (libSQL — cloud SQLite, free tier) |
 | DB client | `@libsql/client` |
 | Styling | Plain CSS (no UI library) |
-| Fonts | DM Sans + Bricolage Grotesque (Google Fonts via Next.js) |
+| Fonts | Noto Serif JP, Noto Sans JP, Source Serif 4, Playfair Display, JetBrains Mono (Google Fonts) |
 | Deployment | Vercel (serverless, zero config) |
 | Data sources | Official retailer APIs & HTML pages (no third-party data provider) |
 
